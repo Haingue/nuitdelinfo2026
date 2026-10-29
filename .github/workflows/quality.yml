@@ -1,0 +1,182 @@
+name: TPS Challenge — Usine Qualité
+
+on:
+  workflow_call:
+    inputs:
+      team-name:
+        description: "Nom de l'équipe (doit correspondre à l'issue d'inscription)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: read
+
+env:
+  CHALLENGE_REPO: votre-org/tpsc-challenge
+  TEMPLATE_PATH: templates/call-tps-challenge.yml
+  SONAR_HOST: https://sonarcloud.io
+  # projectKey et org Sonar dérivés automatiquement : aucune déclaration manuelle côté équipe.
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. Conformité : le fichier d'appel doit être strictement identique
+  #    au template officiel (comparaison par hash SHA-256).
+  # ------------------------------------------------------------------
+  conformite:
+    name: "Jidoka — Contrôle de conformité"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le template officiel
+        run: |
+          curl -sfL "https://raw.githubusercontent.com/${CHALLENGE_REPO}/main/${TEMPLATE_PATH}" -o /tmp/template.yml
+          echo "TEMPLATE_SHA=$(sha256sum /tmp/template.yml | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - name: Récupérer le fichier d'appel du repo de l'équipe
+        run: |
+          # github.workflow_ref = "owner/repo/.github/workflows/<fichier>@refs/heads/main"
+          CALLER_PATH=$(echo "${{ github.workflow_ref }}" | sed 's|@.*$||; s|^[^/]*|${{ github.repository }}|')
+          echo "CALLER_PATH=$CALLER_PATH" >> "$GITHUB_ENV"
+          curl -sfL "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/.github/workflows/$(basename $CALLER_PATH)" -o /tmp/caller.yml
+
+      - name: Comparer les hash
+        run: |
+          CALLER_SHA=$(sha256sum /tmp/caller.yml | cut -d' ' -f1)
+          if [ "$CALLER_SHA" != "$TEMPLATE_SHA" ]; then
+            echo "::error::Fichier d'appel non conforme au template officiel. Restaurez le template d'origine sans le modifier."
+            exit 1
+          fi
+          echo "::notice::Fichier d'appel conforme ✔"
+
+      - name: Vérifier le repo public
+        run: |
+          VISIBILITY=$(gh repo view "${{ github.repository }}" --json visibility --jq .visibility)
+          if [ "$VISIBILITY" != "PUBLIC" ]; then
+            echo "::error::Le repository doit être public (requis pour l'évaluation)."
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # ------------------------------------------------------------------
+  # 2. Scan SonarCloud — exclusions et seuils contrôlés par CE workflow.
+  # ------------------------------------------------------------------
+  sonar:
+    name: "Scan qualité SonarCloud"
+    needs: conformite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # historique complet pour la trajectoire Kaizen
+
+      - name: Installer SonarScanner
+        run: |
+          sudo apt-get update && sudo apt-get install -y unzip
+          curl -sfL "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-6.1.0.4477-linux-x64.zip" -o /tmp/scanner.zip
+          unzip -q /tmp/scanner.zip -d /opt
+          echo "/opt/sonar-scanner-6.1.0.4477-linux-x64/bin" >> "$GITHUB_PATH"
+
+      - name: Scanner le projet (paramétrage imposé)
+        run: |
+          PROJECT_KEY="${{ github.repository_owner }}_${{ github.event.repository.name }}"
+          sonar-scanner \
+            -Dsonar.projectKey="$PROJECT_KEY" \
+            -Dsonar.organization="${SONAR_ORG}" \
+            -Dsonar.host.url="$SONAR_HOST" \
+            -Dsonar.sources=. \
+            -Dsonar.exclusions="**/*.min.js,**/vendor/**,**/dist/**,**/node_modules/**" \
+            -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**" \
+            -Dsonar.python.version=3.11
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # token fourni par l'équipe (créé via notre doc d'onboarding)
+          SONAR_ORG: votre-org      # organisation SonarCloud unique du challenge — imposée ici
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Vérifier le Quality Gate (bloquant = Jidoka)
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        with:
+          scanMetadataReportUrl: ${{ steps.sonar.outputs.report-file }}
+        # Ce job échoue si le gate est rouge → le badge de la team devient rouge sur le leaderboard.
+
+  # ------------------------------------------------------------------
+  # 3. Supply chain — audit des dépendances (vulnérabilités critiques).
+  # ------------------------------------------------------------------
+  dependances:
+    name: "Supply chain — audit dépendances"
+    needs: conformite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy (toutes les vulnérabilités HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          format: json
+          output: trivy-report.json
+          exit-code: "0"   # on ne bloque pas : le score en tiendra compte
+
+      - name: Extraire les métriques supply chain
+        run: |
+          CRIT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json | paste -sd+ | bc)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json | paste -sd+ | bc)
+          echo "CRIT_COUNT=${CRIT:-0}" >> "$GITHUB_ENV"
+          echo "HIGH_COUNT=${HIGH:-0}" >> "$GITHUB_ENV"
+          echo "::notice::CRIT=${CRIT:-0} HIGH=${HIGH:-0}"
+
+  # ------------------------------------------------------------------
+  # 4. Heijunka — régularité des commits sur la nuit.
+  # ------------------------------------------------------------------
+  rythme:
+    name: "Heijunka — régularité"
+    needs: conformite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Contrôle du nombre minimum de commits
+        run: |
+          COUNT=$(git rev-list --count HEAD)
+          echo "COMMIT_COUNT=$COUNT" >> "$GITHUB_ENV"
+          if [ "$COUNT" -lt 20 ]; then
+            echo "::warning::Seulement $COUNT commits — minimum 20 requis pour être classé (trajectoire Kaizen)."
+          fi
+
+      - name: Exporter l'historique horodaté
+        run: |
+          git log --pretty=format:'%H;%aI;%s' > commit-history.csv
+          # Le calcul d'entropie horaire est fait côté batch (leaderboard), pas en CI :
+          # on archive juste les données brutes.
+          mkdir -p artefact
+          cp commit-history.csv artefact/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: heijunka-history
+          path: artefact/commit-history.csv
+
+  # ------------------------------------------------------------------
+  # 5. Rapport — résumé visible dans la run (badge de conformité).
+  # ------------------------------------------------------------------
+  rapport:
+    name: "Rapport d'usine"
+    needs: [conformite, sonar, dependances, rythme]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Synthèse
+        run: |
+          echo "### 🏭 Rapport d'usine — ${{ inputs.team-name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Contrôle | Statut |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Conformité template | ${{ needs.conformite.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Quality Gate SonarCloud | ${{ needs.sonar.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Vulnérabilités CRITICAL/HIGH | ${CRIT_COUNT:-?}/${HIGH_COUNT:-?} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commits | ${COMMIT_COUNT:-?} (min. 20) |" >> "$GITHUB_STEP_SUMMARY"
