@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Sparkline from './components/Sparkline.jsx'
 import BreakdownChart from './components/BreakdownChart.jsx'
 import HistoryChart from './components/HistoryChart.jsx'
+import TeamsHistoryChart, { METRICS } from './components/TeamsHistoryChart.jsx'
 import { loadLeaderboard, loadHistory } from './lib/data.js'
 
 const REFRESH_MS = 60_000 // rafraîchissement toutes les 60 s en local
@@ -188,6 +189,8 @@ export default function App() {
   const [prevRanks, setPrevRanks] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [showComparison, setShowComparison] = useState(false)
+  const [selectedMetric, setSelectedMetric] = useState('total')
 
   useEffect(() => {
     let cancelled = false
@@ -259,9 +262,44 @@ export default function App() {
 
       {/* Liste */}
       <main className="mx-auto mt-8 max-w-5xl px-6 pb-16">
-        <p className="mb-3 text-center text-xs text-slate-600">
-          💡 Cliquez sur une équipe pour voir sa progression détaillée
-        </p>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-slate-500">
+            Cliquez sur une équipe pour voir sa progression détaillée.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowComparison((visible) => !visible)}
+            aria-expanded={showComparison}
+            className="inline-flex items-center gap-2 rounded-md border border-sky-700/70 bg-sky-950/60 px-4 py-2 text-sm font-semibold text-sky-200 transition-colors hover:border-sky-500 hover:bg-sky-900/60"
+          >
+            <span aria-hidden="true">{showComparison ? '▾' : '↗'}</span>
+            {showComparison ? 'Masquer la comparaison' : 'Comparer les scores dans le temps'}
+          </button>
+        </div>
+        {showComparison && (
+          <section className="mb-8 border-y border-slate-800 bg-slate-900/40 py-5" aria-label="Comparaison des équipes par type de score">
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold text-slate-100">Progression par type de score</h2>
+                <p className="mt-1 text-xs text-slate-500">Chaque courbe représente une équipe.</p>
+              </div>
+              <div className="flex flex-wrap gap-1" role="group" aria-label="Type de score">
+                {METRICS.map((metric) => (
+                  <button
+                    key={metric.key}
+                    type="button"
+                    onClick={() => setSelectedMetric(metric.key)}
+                    aria-pressed={selectedMetric === metric.key}
+                    className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${selectedMetric === metric.key ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}
+                  >
+                    {metric.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <TeamsHistoryChart history={history} metric={selectedMetric} />
+          </section>
+        )}
         {rest.length === 0 && podium.length === 0 && (
           <p className="animate-pulse text-center text-slate-500">
             Chargement des usines…
