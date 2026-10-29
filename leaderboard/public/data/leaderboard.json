@@ -1,0 +1,198 @@
+[
+  {
+    "team": "Kaizen Warriors",
+    "repo": "kaizen-warriors/nuit-de-linfo",
+    "score": 92.5,
+    "rank": 1,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 55.0,
+      "pente": 18.5,
+      "resilience": 7.5,
+      "heijunka": 8.2,
+      "bonus_malus": 3
+    }
+  },
+  {
+    "team": "Team#2",
+    "repo": "team-2/nuit-de-linfo",
+    "score": 90.0,
+    "rank": 2,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 55.0,
+      "pente": 16.0,
+      "resilience": 7.5,
+      "heijunka": 8.2,
+      "bonus_malus": 3
+    }
+  },
+  {
+    "team": "Team#3",
+    "repo": "team-3/nuit-de-linfo",
+    "score": 87.4,
+    "rank": 3,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 52.2,
+      "pente": 15.3,
+      "resilience": 7.1,
+      "heijunka": 8.0,
+      "bonus_malus": 4.8
+    }
+  },
+  {
+    "team": "Toyota Pulse",
+    "repo": "toyota-pulse/nuit-de-linfo",
+    "score": 86.2,
+    "rank": 4,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 50.8,
+      "pente": 15.9,
+      "resilience": 7.4,
+      "heijunka": 7.6,
+      "bonus_malus": 4.5
+    }
+  },
+  {
+    "team": "Kaizen Cloud",
+    "repo": "kaizen-cloud/nuit-de-linfo",
+    "score": 84.9,
+    "rank": 5,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 49.1,
+      "pente": 15.2,
+      "resilience": 7.0,
+      "heijunka": 8.1,
+      "bonus_malus": 5.5
+    }
+  },
+  {
+    "team": "Blue Shift",
+    "repo": "blue-shift/nuit-de-linfo",
+    "score": 83.7,
+    "rank": 6,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 48.6,
+      "pente": 14.8,
+      "resilience": 7.3,
+      "heijunka": 7.9,
+      "bonus_malus": 5.1
+    }
+  },
+  {
+    "team": "Flex & Flow",
+    "repo": "flex-and-flow/nuit-de-linfo",
+    "score": 82.5,
+    "rank": 7,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 47.9,
+      "pente": 14.4,
+      "resilience": 7.2,
+      "heijunka": 8.2,
+      "bonus_malus": 4.8
+    }
+  },
+  {
+    "team": "Autonomous Sprinters",
+    "repo": "autonomous-sprinters/nuit-de-linfo",
+    "score": 81.3,
+    "rank": 8,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 46.7,
+      "pente": 15.1,
+      "resilience": 6.8,
+      "heijunka": 7.5,
+      "bonus_malus": 5.2
+    }
+  },
+  {
+    "team": "Lean Orbit",
+    "repo": "lean-orbit/nuit-de-linfo",
+    "score": 79.8,
+    "rank": 9,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 45.4,
+      "pente": 14.9,
+      "resilience": 7.0,
+      "heijunka": 7.8,
+      "bonus_malus": 4.7
+    }
+  },
+  {
+    "team": "Zero Waste Unit",
+    "repo": "zero-waste-unit/nuit-de-linfo",
+    "score": 78.6,
+    "rank": 10,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 44.1,
+      "pente": 14.5,
+      "resilience": 7.4,
+      "heijunka": 7.8,
+      "bonus_malus": 4.8
+    }
+  },
+  {
+    "team": "Matrice du Futur",
+    "repo": "matrice-du-futur/nuit-de-linfo",
+    "score": 77.1,
+    "rank": 11,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 43.0,
+      "pente": 14.2,
+      "resilience": 7.1,
+      "heijunka": 7.3,
+      "bonus_malus": 5.5
+    }
+  },
+  {
+    "team": "Green Loop",
+    "repo": "green-loop/nuit-de-linfo",
+    "score": 75.9,
+    "rank": 12,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 42.7,
+      "pente": 13.9,
+      "resilience": 7.0,
+      "heijunka": 7.2,
+      "bonus_malus": 5.1
+    }
+  },
+  {
+    "team": "Factory 42",
+    "repo": "factory-42/nuit-de-linfo",
+    "score": 74.3,
+    "rank": 13,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 41.8,
+      "pente": 13.5,
+      "resilience": 6.9,
+      "heijunka": 7.1,
+      "bonus_malus": 5.0
+    }
+  },
+  {
+    "team": "NextMove",
+    "repo": "nextmove/nuit-de-linfo",
+    "score": 72.8,
+    "rank": 14,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 40.6,
+      "pente": 13.2,
+      "resilience": 6.7,
+      "heijunka": 7.0,
+      "bonus_malus": 5.3
+    }
+  }
+]

@@ -16,7 +16,9 @@ Vous n'allez pas seulement développer une application. Vous allez construire un
 - **Poka-yoke** — anti-erreur : des garde-fous qui empêchent le défaut d'entrer dans la chaîne.
 
 <center>
-    <img alt="Toyota Production System" src="resources\Toyota-Systeme-de-production-Maison.jpg" style="width:400px"/>
+
+    <img alt="Toyota Production System" src="resources/Toyota-Systeme-de-production-Maison.jpg" style="width:400px"/>
+
 </center>
 
 **Le produit qui gagne n'est pas celui qui fait le plus de fonctionnalités. C'est celui qui sort de la ligne avec la meilleure qualité, livré par l'usine la plus respectueuse de ses standards.**
@@ -37,30 +39,30 @@ Vous n'allez pas seulement développer une application. Vous allez construire un
 
 ### A. Qualité à la livraison — 60 pts
 
-| Critère | Points |
-|---|---|
-| Quality Gate SonarCloud **vert** sur le dernier scan | 20 |
-| Note de maintenabilité (A = 15, B = 10, C = 5, D/E = 0) | 15 |
-| Note de sécurité (A = 10, B = 6, C = 3, D/E = 0) | 10 |
-| Couverture de tests (≥ 60 % = 10 pts, sinon proportionnelle) | 10 |
-| Zéro vulnérabilité critique ou haute dans les dépendances | 5 |
+| Critère                                                      | Points |
+| ------------------------------------------------------------ | ------ |
+| Quality Gate SonarCloud **vert** sur le dernier scan         | 20     |
+| Note de maintenabilité (A = 15, B = 10, C = 5, D/E = 0)      | 15     |
+| Note de sécurité (A = 10, B = 6, C = 3, D/E = 0)             | 10     |
+| Couverture de tests (≥ 60 % = 10 pts, sinon proportionnelle) | 10     |
+| Zéro vulnérabilité critique ou haute dans les dépendances    | 5      |
 
 ### B. Kaizen — votre trajectoire — 40 pts
 
-| Critère | Points |
-|---|---|
-| **Pente de progression** : écart entre votre premier et votre dernier score qualité | 20 |
-| **Résilience (Jidoka)** : chaque Quality Gate rouge redressé au vert compte | 10 |
-| **Heijunka** : régularité de vos commits au fil de la nuit (pas de rush final) | 10 |
+| Critère                                                                             | Points |
+| ----------------------------------------------------------------------------------- | ------ |
+| **Pente de progression** : écart entre votre premier et votre dernier score qualité | 20     |
+| **Résilience (Jidoka)** : chaque Quality Gate rouge redressé au vert compte         | 10     |
+| **Heijunka** : régularité de vos commits au fil de la nuit (pas de rush final)      | 10     |
 
 ### C. Bonus & malus
 
-| | Points |
-|---|---|
-| 🟢 Jamais laissé un Quality Gate rouge plus de 30 minutes | **+5** |
-| 🟢 Régression corrigée dans le commit suivant | **+3** |
-| 🔴 Dernier scan en régression par rapport au précédent | **−5** |
-| 🔴 Quality Gate rouge à la fin de la nuit | **−10** |
+|                                                           | Points  |
+| --------------------------------------------------------- | ------- |
+| 🟢 Jamais laissé un Quality Gate rouge plus de 30 minutes | **+5**  |
+| 🟢 Régression corrigée dans le commit suivant             | **+3**  |
+| 🔴 Dernier scan en régression par rapport au précédent    | **−5**  |
+| 🔴 Quality Gate rouge à la fin de la nuit                 | **−10** |
 
 ---
 
@@ -73,9 +75,24 @@ Votre projet est évalué uniquement si **toutes** ces conditions sont respecté
 3. **Branche `main` protégée** : le merge est bloqué si le Quality Gate est rouge.
 4. **Minimum de 20 commits** sur la nuit, pour que votre trajectoire Kaizen ait un sens.
 5. **Scan sur l'intégralité du code** du repository : les paramètres d'exclusion du projet SonarCloud sont vérifiés via l'API.
-6. Un **seuil de score minimum** (fixé par Toyota après analyse des résultats) conditionne le classement final.
+6. **Token SonarCloud propre à l'équipe** : chaque équipe crée son compte SonarCloud, déclare son organisation et génère un token d'analyse (voir procédure ci-dessous).
+7. **Empreinte d'identité** : votre fichier d'appel contient l'empreinte d'identité générée à votre inscription ; elle lie votre équipe à votre repository. Une empreinte qui ne correspond pas au repo scanné entraîne la disqualification.
+8. Un **seuil de score minimum** (fixé par Toyota après analyse des résultats) conditionne le classement final.
 
 💡 **Astuce** : commencez dès le premier commit par des garde-fous stricts (lint, tests, gate). Un projet modulaire, testé et propre dès le départ a une trajectoire plus lisible qu'un projet corrigé dans la dernière heure.
+
+---
+
+## 🔑 Procédure — Token SonarCloud (obligatoire)
+
+Votre workflow d'appel lance un scan SonarCloud à chaque push. Celui-ci s'authentifie avec **votre** token :
+
+1. Créez un compte sur [sonarcloud.io](https://sonarcloud.io) avec votre compte GitHub.
+2. Créez une **organisation SonarCloud dédiée à votre équipe** et liez-la à votre repository GitHub public.
+3. Générez un token : _Mon compte → Sécurité → Generate token_ (droits : _Analyze projects_).
+4. Ajoutez-le comme secret dans votre repo GitHub : _Settings → Secrets and variables → Actions → New repository secret_, nommé **`SONAR_TOKEN`**. Ne le partagez jamais, ne le committez jamais.
+
+> 💡 Vous n'avez **rien d'autre à configurer** : la clé de projet, l'organisation de référence et les exclusions de scan sont imposées par le workflow Toyota. Votre token ne sert qu'à authentifier le scan de **votre** repository.
 
 ---
 

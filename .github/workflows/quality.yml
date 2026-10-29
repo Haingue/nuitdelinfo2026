@@ -1,5 +1,4 @@
 name: TPS Challenge — Usine Qualité
-
 on:
   workflow_call:
     inputs:
@@ -7,14 +6,15 @@ on:
         description: "Nom de l'équipe (doit correspondre à l'issue d'inscription)"
         required: true
         type: string
+      # AUCUNE autre entrée : pas d'exclusions, pas de seuils, pas de chemins paramétrables.
 
 permissions:
   contents: read
   issues: read
 
 env:
-  CHALLENGE_REPO: votre-org/tpsc-challenge
-  TEMPLATE_PATH: templates/call-tps-challenge.yml
+  CHALLENGE_REPO: Haingue/nuitdelinfo2026
+  TEMPLATE_PATH: templates/appeler-tps-challenge.yml
   SONAR_HOST: https://sonarcloud.io
   # projectKey et org Sonar dérivés automatiquement : aucune déclaration manuelle côté équipe.
 
@@ -24,13 +24,20 @@ jobs:
   #    au template officiel (comparaison par hash SHA-256).
   # ------------------------------------------------------------------
   conformite:
-    name: "Jidoka — Contrôle de conformité"
+    name: 'Jidoka — Contrôle de conformité'
     runs-on: ubuntu-latest
     steps:
-      - name: Récupérer le template officiel
+      - name: Récupérer le fichier d'appel officiel de l'équipe (généré à l'inscription)
         run: |
-          curl -sfL "https://raw.githubusercontent.com/${CHALLENGE_REPO}/main/${TEMPLATE_PATH}" -o /tmp/template.yml
-          echo "TEMPLATE_SHA=$(sha256sum /tmp/template.yml | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          TEAM="${{ inputs.team-name }}"
+          # Le fichier teams/<team>.yml est généré par notre Action d'inscription
+          # (team-name + identity-hash personnalisés, empreinte liée au repository_id).
+          curl -sfL "https://raw.githubusercontent.com/${CHALLENGE_REPO}/main/teams/${TEAM}.yml" -o /tmp/attendu.yml
+          if [ ! -s /tmp/attendu.yml ]; then
+            echo "::error::Aucun fichier d'inscription trouvé pour l'équipe '${TEAM}'. Vérifiez votre issue d'inscription sur ${CHALLENGE_REPO}."
+            exit 1
+          fi
+          echo "ATTENDU_SHA=$(sha256sum /tmp/attendu.yml | cut -d' ' -f1)" >> "$GITHUB_ENV"
 
       - name: Récupérer le fichier d'appel du repo de l'équipe
         run: |
@@ -39,14 +46,17 @@ jobs:
           echo "CALLER_PATH=$CALLER_PATH" >> "$GITHUB_ENV"
           curl -sfL "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/.github/workflows/$(basename $CALLER_PATH)" -o /tmp/caller.yml
 
-      - name: Comparer les hash
+      - name: Comparer les hash (fichier d'appel == fichier généré par Toyota)
         run: |
           CALLER_SHA=$(sha256sum /tmp/caller.yml | cut -d' ' -f1)
-          if [ "$CALLER_SHA" != "$TEMPLATE_SHA" ]; then
-            echo "::error::Fichier d'appel non conforme au template officiel. Restaurez le template d'origine sans le modifier."
+          if [ "$CALLER_SHA" != "$ATTENDU_SHA" ]; then
+            echo "::error::Fichier d'appel non conforme au fichier généré lors de votre inscription (teams/${{ inputs.team-name }}.yml). Restaurez-le sans le modifier."
             exit 1
           fi
           echo "::notice::Fichier d'appel conforme ✔"
+          # NB : la validité de l'empreinte identity-hash (SHA-256 de repository_id
+          # + team-name + sel secret) est vérifiée côté batch Toyota, où le sel
+          # est conservé — jamais dans ce workflow ni côté équipes.
 
       - name: Vérifier le repo public
         run: |
@@ -62,13 +72,13 @@ jobs:
   # 2. Scan SonarCloud — exclusions et seuils contrôlés par CE workflow.
   # ------------------------------------------------------------------
   sonar:
-    name: "Scan qualité SonarCloud"
+    name: 'Scan qualité SonarCloud'
     needs: conformite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # historique complet pour la trajectoire Kaizen
+          fetch-depth: 0 # historique complet pour la trajectoire Kaizen
 
       - name: Installer SonarScanner
         run: |
@@ -89,8 +99,8 @@ jobs:
             -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**" \
             -Dsonar.python.version=3.11
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # token fourni par l'équipe (créé via notre doc d'onboarding)
-          SONAR_ORG: votre-org      # organisation SonarCloud unique du challenge — imposée ici
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token fourni par l'équipe (créé via notre doc d'onboarding)
+          SONAR_ORG: votre-org # organisation SonarCloud unique du challenge — imposée ici
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Vérifier le Quality Gate (bloquant = Jidoka)
@@ -104,7 +114,7 @@ jobs:
   # 3. Supply chain — audit des dépendances (vulnérabilités critiques).
   # ------------------------------------------------------------------
   dependances:
-    name: "Supply chain — audit dépendances"
+    name: 'Supply chain — audit dépendances'
     needs: conformite
     runs-on: ubuntu-latest
     steps:
@@ -118,7 +128,7 @@ jobs:
           severity: HIGH,CRITICAL
           format: json
           output: trivy-report.json
-          exit-code: "0"   # on ne bloque pas : le score en tiendra compte
+          exit-code: '0' # on ne bloque pas : le score en tiendra compte
 
       - name: Extraire les métriques supply chain
         run: |
@@ -132,7 +142,7 @@ jobs:
   # 4. Heijunka — régularité des commits sur la nuit.
   # ------------------------------------------------------------------
   rythme:
-    name: "Heijunka — régularité"
+    name: 'Heijunka — régularité'
     needs: conformite
     runs-on: ubuntu-latest
     steps:

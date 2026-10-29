@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+/* lueur du podium */
+.glow-gold {
+  box-shadow: 0 0 32px rgba(251, 191, 36, 0.45);
+}
+.glow-silver {
+  box-shadow: 0 0 24px rgba(203, 213, 225, 0.35);
+}
+.glow-bronze {
+  box-shadow: 0 0 24px rgba(217, 119, 6, 0.35);
+}
