@@ -239,12 +239,13 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
     # --- B. Kaizen (40) ----------------------------------------------
     history = fetch_scan_history(team, cfg.sonar_token, cfg.window_start)
 
-    # Pente (20) : proxy = évolution du volume d'issues entre premier et
-    # dernier scan de la nuit (l'API measures ne renvoie que le snapshot
-    # courant ; pour une vraie pente on archive chaque run du batch, cf. NB).
-    if len(cfg.history_archive.get(team.name, [])) >= 2:
-        first, last = cfg.history_archive[team.name][0], cfg.history_archive[team.name][-1]
-        s.pente = round(max((last - first) / 30 * 20, 0), 2)
+    # Pente (20) : trajectoire de la composante qualité depuis le début de
+    # la nuit. scores-history.json archive un snapshot complet par batch
+    # (ts + tous les sous-scores) -> sert aussi au graphique de progression.
+    archive = cfg.history_archive.get(team.name, [])
+    if archive:
+        first = archive[0]["qualite"]
+        s.pente = round(max((s.quality - first) / 30 * 20, 0), 2)
         s.pente = min(s.pente, 20)
 
     # Résilience (10) : runs rouges repassés au vert (2.5 pts par redressement)
@@ -269,9 +270,8 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
     # --- C. Bonus / malus --------------------------------------------
     if red == 0 and not any(r["conclusion"] == "failure" for r in runs):
         s.bonus += 5    # jamais resté rouge sur la fenêtre analysée
-    archive = cfg.history_archive.get(team.name, [])
-    if len(archive) >= 2 and archive[-1] < archive[-2]:
-        s.bonus -= 5    # dernier scan en régression
+    if len(archive) >= 2 and archive[-1]["total"] < archive[-2]["total"]:
+        s.bonus -= 5    # dernier batch en régression
     if not gate_current:
         s.bonus -= 10   # gate rouge à la livraison
 
@@ -328,10 +328,18 @@ def main() -> None:
     for team in teams:
         try:
             score, details = score_team(team, cfg)
-            # archive la trajectoire pour la pente au prochain batch
+            # archive la trajectoire pour la pente + le suivi détaillé par équipe
             if "error" not in details:
-                partial = round(score.quality, 2)
-                cfg.history_archive.setdefault(team.name, []).append(partial)
+                snapshot = {
+                    "ts": datetime.now(timezone.utc).isoformat(),
+                    "total": score.total,
+                    "qualite": score.quality,
+                    "pente": score.pente,
+                    "resilience": score.resilience,
+                    "heijunka": score.heijunka,
+                    "bonus_malus": score.bonus,
+                }
+                cfg.history_archive.setdefault(team.name, []).append(snapshot)
             leaderboard.append({
                 "team": team.name,
                 "repo": team.repo_full,

@@ -1,0 +1,586 @@
+{
+  "Kaizen Warriors": [
+    {
+      "ts": "2026-12-04T20:15:02+00:00",
+      "total": 12.0,
+      "qualite": 8.0,
+      "pente": 0,
+      "resilience": 2.5,
+      "heijunka": 1.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T20:30:01+00:00",
+      "total": 21.0,
+      "qualite": 14.0,
+      "pente": 2.5,
+      "resilience": 2.5,
+      "heijunka": 2.0,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 01": [
+    {
+      "ts": "2026-12-04T20:00:00+00:00",
+      "total": 7,
+      "qualite": 5,
+      "pente": 0,
+      "resilience": 0,
+      "heijunka": 2,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:00:00+00:00",
+      "total": 14,
+      "qualite": 10,
+      "pente": 1,
+      "resilience": 0,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:00:00+00:00",
+      "total": 22.5,
+      "qualite": 15,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:00:00+00:00",
+      "total": 29.5,
+      "qualite": 20,
+      "pente": 3,
+      "resilience": 2.5,
+      "heijunka": 4,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:00:00+00:00",
+      "total": 39,
+      "qualite": 25,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 5,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 02": [
+    {
+      "ts": "2026-12-04T20:05:00+00:00",
+      "total": 12,
+      "qualite": 8,
+      "pente": 0,
+      "resilience": 2.5,
+      "heijunka": 1.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:05:00+00:00",
+      "total": 18.5,
+      "qualite": 12,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 2,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:05:00+00:00",
+      "total": 28,
+      "qualite": 17,
+      "pente": 3,
+      "resilience": 5,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:05:00+00:00",
+      "total": 35,
+      "qualite": 22,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 4,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:05:00+00:00",
+      "total": 45.5,
+      "qualite": 28,
+      "pente": 5,
+      "resilience": 7.5,
+      "heijunka": 5,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 03": [
+    {
+      "ts": "2026-12-04T20:10:00+00:00",
+      "total": 5,
+      "qualite": 3,
+      "pente": 0,
+      "resilience": 0,
+      "heijunka": 2,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:10:00+00:00",
+      "total": 12.5,
+      "qualite": 7,
+      "pente": 1,
+      "resilience": 2.5,
+      "heijunka": 2,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:10:00+00:00",
+      "total": 20,
+      "qualite": 12,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 3.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:10:00+00:00",
+      "total": 28.5,
+      "qualite": 17,
+      "pente": 3,
+      "resilience": 5,
+      "heijunka": 3.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:10:00+00:00",
+      "total": 39,
+      "qualite": 23,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 7,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 04": [
+    {
+      "ts": "2026-12-04T20:15:00+00:00",
+      "total": 10,
+      "qualite": 6,
+      "pente": 1,
+      "resilience": 0,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:15:00+00:00",
+      "total": 18,
+      "qualite": 11,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 2.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:15:00+00:00",
+      "total": 26,
+      "qualite": 16,
+      "pente": 3,
+      "resilience": 2.5,
+      "heijunka": 4.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:15:00+00:00",
+      "total": 36,
+      "qualite": 22,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:15:00+00:00",
+      "total": 47.5,
+      "qualite": 29,
+      "pente": 5,
+      "resilience": 7.5,
+      "heijunka": 6,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 05": [
+    {
+      "ts": "2026-12-04T20:20:00+00:00",
+      "total": 8,
+      "qualite": 5,
+      "pente": 0,
+      "resilience": 1.5,
+      "heijunka": 1.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:20:00+00:00",
+      "total": 16.5,
+      "qualite": 10,
+      "pente": 1.5,
+      "resilience": 2.5,
+      "heijunka": 2.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:20:00+00:00",
+      "total": 25,
+      "qualite": 15,
+      "pente": 3,
+      "resilience": 2.5,
+      "heijunka": 4.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:20:00+00:00",
+      "total": 34.5,
+      "qualite": 21,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 4.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:20:00+00:00",
+      "total": 44,
+      "qualite": 27,
+      "pente": 5,
+      "resilience": 5,
+      "heijunka": 7,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 06": [
+    {
+      "ts": "2026-12-04T20:25:00+00:00",
+      "total": 9,
+      "qualite": 6,
+      "pente": 0,
+      "resilience": 0,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:25:00+00:00",
+      "total": 17.5,
+      "qualite": 11,
+      "pente": 1.5,
+      "resilience": 2.5,
+      "heijunka": 2.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:25:00+00:00",
+      "total": 27,
+      "qualite": 17,
+      "pente": 3,
+      "resilience": 2.5,
+      "heijunka": 4.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:25:00+00:00",
+      "total": 37.5,
+      "qualite": 23,
+      "pente": 4.5,
+      "resilience": 5,
+      "heijunka": 5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:25:00+00:00",
+      "total": 49,
+      "qualite": 30,
+      "pente": 6,
+      "resilience": 5,
+      "heijunka": 8,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 07": [
+    {
+      "ts": "2026-12-04T20:30:00+00:00",
+      "total": 6,
+      "qualite": 4,
+      "pente": 0,
+      "resilience": 0,
+      "heijunka": 2,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:30:00+00:00",
+      "total": 14,
+      "qualite": 9,
+      "pente": 1,
+      "resilience": 1.5,
+      "heijunka": 2.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:30:00+00:00",
+      "total": 22,
+      "qualite": 14,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 3.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:30:00+00:00",
+      "total": 31.5,
+      "qualite": 19,
+      "pente": 3,
+      "resilience": 5,
+      "heijunka": 4.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:30:00+00:00",
+      "total": 41,
+      "qualite": 25,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 7,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 08": [
+    {
+      "ts": "2026-12-04T20:35:00+00:00",
+      "total": 11,
+      "qualite": 7,
+      "pente": 1,
+      "resilience": 0,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:35:00+00:00",
+      "total": 19.5,
+      "qualite": 12,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:35:00+00:00",
+      "total": 29,
+      "qualite": 18,
+      "pente": 3,
+      "resilience": 2.5,
+      "heijunka": 5.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:35:00+00:00",
+      "total": 39.5,
+      "qualite": 24,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 6.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:35:00+00:00",
+      "total": 51,
+      "qualite": 31,
+      "pente": 5,
+      "resilience": 7.5,
+      "heijunka": 7.5,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 09": [
+    {
+      "ts": "2026-12-04T20:40:00+00:00",
+      "total": 4.5,
+      "qualite": 3,
+      "pente": 0,
+      "resilience": 0,
+      "heijunka": 1.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:40:00+00:00",
+      "total": 12,
+      "qualite": 7,
+      "pente": 1,
+      "resilience": 1.5,
+      "heijunka": 2.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:40:00+00:00",
+      "total": 21,
+      "qualite": 13,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 3.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:40:00+00:00",
+      "total": 30.5,
+      "qualite": 19,
+      "pente": 3,
+      "resilience": 2.5,
+      "heijunka": 6,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:40:00+00:00",
+      "total": 41,
+      "qualite": 26,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 6,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 10": [
+    {
+      "ts": "2026-12-04T20:45:00+00:00",
+      "total": 9.5,
+      "qualite": 6,
+      "pente": 0.5,
+      "resilience": 0,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:45:00+00:00",
+      "total": 18,
+      "qualite": 11,
+      "pente": 1.5,
+      "resilience": 2.5,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:45:00+00:00",
+      "total": 27.5,
+      "qualite": 17,
+      "pente": 2.5,
+      "resilience": 2.5,
+      "heijunka": 5.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:45:00+00:00",
+      "total": 38,
+      "qualite": 23,
+      "pente": 3.5,
+      "resilience": 5,
+      "heijunka": 6.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:45:00+00:00",
+      "total": 49.5,
+      "qualite": 30,
+      "pente": 4.5,
+      "resilience": 7.5,
+      "heijunka": 7.5,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 11": [
+    {
+      "ts": "2026-12-04T20:50:00+00:00",
+      "total": 7.5,
+      "qualite": 5,
+      "pente": 0,
+      "resilience": 0,
+      "heijunka": 2.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:50:00+00:00",
+      "total": 15.5,
+      "qualite": 10,
+      "pente": 1,
+      "resilience": 1.5,
+      "heijunka": 3,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:50:00+00:00",
+      "total": 24,
+      "qualite": 15,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 4.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:50:00+00:00",
+      "total": 34,
+      "qualite": 21,
+      "pente": 3,
+      "resilience": 5,
+      "heijunka": 5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:50:00+00:00",
+      "total": 44,
+      "qualite": 27,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 8,
+      "bonus_malus": 0
+    }
+  ],
+  "Equipe Test 12": [
+    {
+      "ts": "2026-12-04T20:55:00+00:00",
+      "total": 13,
+      "qualite": 8,
+      "pente": 1,
+      "resilience": 1.5,
+      "heijunka": 2.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T21:55:00+00:00",
+      "total": 21.5,
+      "qualite": 13,
+      "pente": 2,
+      "resilience": 2.5,
+      "heijunka": 4,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T22:55:00+00:00",
+      "total": 31,
+      "qualite": 19,
+      "pente": 3,
+      "resilience": 2.5,
+      "heijunka": 6.5,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-04T23:55:00+00:00",
+      "total": 42,
+      "qualite": 26,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 7,
+      "bonus_malus": 0
+    },
+    {
+      "ts": "2026-12-05T00:55:00+00:00",
+      "total": 53.5,
+      "qualite": 33,
+      "pente": 5,
+      "resilience": 7.5,
+      "heijunka": 8,
+      "bonus_malus": 0
+    }
+  ]
+}

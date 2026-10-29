@@ -1,12 +1,16 @@
+import { toSeries } from '../lib/data.js'
+
 export default function Sparkline({ points, width = 140, height = 36 }) {
-  if (!points || points.length < 2) return null
+  const series = toSeries(points)
+  if (series.length < 2) return null
 
-  const min = Math.min(...points)
-  const max = Math.max(...points)
+  const values = series.map((s) => s.total)
+  const min = Math.min(...values)
+  const max = Math.max(...values)
   const span = max - min || 1
-  const stepX = width / (points.length - 1)
+  const stepX = width / (values.length - 1)
 
-  const coords = points.map((v, i) => {
+  const coords = values.map((v, i) => {
     const x = i * stepX
     const y = height - ((v - min) / span) * (height - 4) - 2
     return [x, y]

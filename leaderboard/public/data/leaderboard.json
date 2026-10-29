@@ -1,198 +1,171 @@
 [
   {
-    "team": "Kaizen Warriors",
-    "repo": "kaizen-warriors/nuit-de-linfo",
-    "score": 92.5,
+    "team": "Equipe Test 12",
     "rank": 1,
+    "score": 53.5,
     "eligible": true,
     "breakdown": {
-      "qualite": 55.0,
-      "pente": 18.5,
+      "qualite": 33,
+      "pente": 5,
       "resilience": 7.5,
-      "heijunka": 8.2,
-      "bonus_malus": 3
+      "heijunka": 8,
+      "bonus_malus": 0
     }
   },
   {
-    "team": "Team#2",
-    "repo": "team-2/nuit-de-linfo",
-    "score": 90.0,
+    "team": "Equipe Test 08",
     "rank": 2,
+    "score": 51,
     "eligible": true,
     "breakdown": {
-      "qualite": 55.0,
-      "pente": 16.0,
+      "qualite": 31,
+      "pente": 5,
       "resilience": 7.5,
-      "heijunka": 8.2,
-      "bonus_malus": 3
-    }
-  },
-  {
-    "team": "Team#3",
-    "repo": "team-3/nuit-de-linfo",
-    "score": 87.4,
-    "rank": 3,
-    "eligible": true,
-    "breakdown": {
-      "qualite": 52.2,
-      "pente": 15.3,
-      "resilience": 7.1,
-      "heijunka": 8.0,
-      "bonus_malus": 4.8
-    }
-  },
-  {
-    "team": "Toyota Pulse",
-    "repo": "toyota-pulse/nuit-de-linfo",
-    "score": 86.2,
-    "rank": 4,
-    "eligible": true,
-    "breakdown": {
-      "qualite": 50.8,
-      "pente": 15.9,
-      "resilience": 7.4,
-      "heijunka": 7.6,
-      "bonus_malus": 4.5
-    }
-  },
-  {
-    "team": "Kaizen Cloud",
-    "repo": "kaizen-cloud/nuit-de-linfo",
-    "score": 84.9,
-    "rank": 5,
-    "eligible": true,
-    "breakdown": {
-      "qualite": 49.1,
-      "pente": 15.2,
-      "resilience": 7.0,
-      "heijunka": 8.1,
-      "bonus_malus": 5.5
-    }
-  },
-  {
-    "team": "Blue Shift",
-    "repo": "blue-shift/nuit-de-linfo",
-    "score": 83.7,
-    "rank": 6,
-    "eligible": true,
-    "breakdown": {
-      "qualite": 48.6,
-      "pente": 14.8,
-      "resilience": 7.3,
-      "heijunka": 7.9,
-      "bonus_malus": 5.1
-    }
-  },
-  {
-    "team": "Flex & Flow",
-    "repo": "flex-and-flow/nuit-de-linfo",
-    "score": 82.5,
-    "rank": 7,
-    "eligible": true,
-    "breakdown": {
-      "qualite": 47.9,
-      "pente": 14.4,
-      "resilience": 7.2,
-      "heijunka": 8.2,
-      "bonus_malus": 4.8
-    }
-  },
-  {
-    "team": "Autonomous Sprinters",
-    "repo": "autonomous-sprinters/nuit-de-linfo",
-    "score": 81.3,
-    "rank": 8,
-    "eligible": true,
-    "breakdown": {
-      "qualite": 46.7,
-      "pente": 15.1,
-      "resilience": 6.8,
       "heijunka": 7.5,
-      "bonus_malus": 5.2
+      "bonus_malus": 0
     }
   },
   {
-    "team": "Lean Orbit",
-    "repo": "lean-orbit/nuit-de-linfo",
-    "score": 79.8,
+    "team": "Equipe Test 10",
+    "rank": 3,
+    "score": 49.5,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 30,
+      "pente": 4.5,
+      "resilience": 7.5,
+      "heijunka": 7.5,
+      "bonus_malus": 0
+    }
+  },
+  {
+    "team": "Equipe Test 06",
+    "rank": 4,
+    "score": 49,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 30,
+      "pente": 6,
+      "resilience": 5,
+      "heijunka": 8,
+      "bonus_malus": 0
+    }
+  },
+  {
+    "team": "Equipe Test 04",
+    "rank": 5,
+    "score": 47.5,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 29,
+      "pente": 5,
+      "resilience": 7.5,
+      "heijunka": 6,
+      "bonus_malus": 0
+    }
+  },
+  {
+    "team": "Equipe Test 02",
+    "rank": 6,
+    "score": 45.5,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 28,
+      "pente": 5,
+      "resilience": 7.5,
+      "heijunka": 5,
+      "bonus_malus": 0
+    }
+  },
+  {
+    "team": "Equipe Test 05",
+    "rank": 7,
+    "score": 44,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 27,
+      "pente": 5,
+      "resilience": 5,
+      "heijunka": 7,
+      "bonus_malus": 0
+    }
+  },
+  {
+    "team": "Equipe Test 11",
+    "rank": 7,
+    "score": 44,
+    "eligible": true,
+    "breakdown": {
+      "qualite": 27,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 8,
+      "bonus_malus": 0
+    }
+  },
+  {
+    "team": "Equipe Test 07",
     "rank": 9,
+    "score": 41,
     "eligible": true,
     "breakdown": {
-      "qualite": 45.4,
-      "pente": 14.9,
-      "resilience": 7.0,
-      "heijunka": 7.8,
-      "bonus_malus": 4.7
+      "qualite": 25,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 7,
+      "bonus_malus": 0
     }
   },
   {
-    "team": "Zero Waste Unit",
-    "repo": "zero-waste-unit/nuit-de-linfo",
-    "score": 78.6,
-    "rank": 10,
+    "team": "Equipe Test 09",
+    "rank": 9,
+    "score": 41,
     "eligible": true,
     "breakdown": {
-      "qualite": 44.1,
-      "pente": 14.5,
-      "resilience": 7.4,
-      "heijunka": 7.8,
-      "bonus_malus": 4.8
+      "qualite": 26,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 6,
+      "bonus_malus": 0
     }
   },
   {
-    "team": "Matrice du Futur",
-    "repo": "matrice-du-futur/nuit-de-linfo",
-    "score": 77.1,
+    "team": "Equipe Test 01",
     "rank": 11,
+    "score": 39,
     "eligible": true,
     "breakdown": {
-      "qualite": 43.0,
-      "pente": 14.2,
-      "resilience": 7.1,
-      "heijunka": 7.3,
-      "bonus_malus": 5.5
+      "qualite": 25,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 5,
+      "bonus_malus": 0
     }
   },
   {
-    "team": "Green Loop",
-    "repo": "green-loop/nuit-de-linfo",
-    "score": 75.9,
-    "rank": 12,
+    "team": "Equipe Test 03",
+    "rank": 11,
+    "score": 39,
     "eligible": true,
     "breakdown": {
-      "qualite": 42.7,
-      "pente": 13.9,
-      "resilience": 7.0,
-      "heijunka": 7.2,
-      "bonus_malus": 5.1
+      "qualite": 23,
+      "pente": 4,
+      "resilience": 5,
+      "heijunka": 7,
+      "bonus_malus": 0
     }
   },
   {
-    "team": "Factory 42",
-    "repo": "factory-42/nuit-de-linfo",
-    "score": 74.3,
+    "team": "Kaizen Warriors",
     "rank": 13,
+    "score": 21,
     "eligible": true,
     "breakdown": {
-      "qualite": 41.8,
-      "pente": 13.5,
-      "resilience": 6.9,
-      "heijunka": 7.1,
-      "bonus_malus": 5.0
-    }
-  },
-  {
-    "team": "NextMove",
-    "repo": "nextmove/nuit-de-linfo",
-    "score": 72.8,
-    "rank": 14,
-    "eligible": true,
-    "breakdown": {
-      "qualite": 40.6,
-      "pente": 13.2,
-      "resilience": 6.7,
-      "heijunka": 7.0,
-      "bonus_malus": 5.3
+      "qualite": 14,
+      "pente": 2.5,
+      "resilience": 2.5,
+      "heijunka": 2,
+      "bonus_malus": 0
     }
   }
 ]

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Sparkline from './components/Sparkline.jsx'
 import BreakdownChart from './components/BreakdownChart.jsx'
-import ScoreBreakdownCharts from './components/ScoreBreakdownCharts.jsx'
+import HistoryChart from './components/HistoryChart.jsx'
 import { loadLeaderboard, loadHistory } from './lib/data.js'
 
 const REFRESH_MS = 60_000 // rafraîchissement toutes les 60 s en local
@@ -28,33 +28,97 @@ function useCountUp(target, duration = 800) {
   return value
 }
 
-function PodiumCard({ team, place }) {
+// ---- Modal : suivi de progression détaillé d'une équipe ----------------
+function TeamDetail({ team, history, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const snapshots = history[team.team] || []
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-fade-in" />
+      <div
+        className="animate-slide-up relative max-h-[90vh] w-full max-w-3xl overflow-y-auto
+        rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-black text-slate-100">{team.team}</h2>
+            {/* <a
+              href={`https://github.com/${team.repo}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-sky-400 hover:text-sky-300 transition-colors"
+            >
+              {team.repo} ↗
+            </a> */}
+          </div>
+          <div className="text-right">
+            <div className="font-mono text-3xl font-black text-emerald-400">
+              {(team.score ?? 0).toFixed(1)}
+            </div>
+            <div className="text-xs text-slate-500">points · #{team.rank}</div>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+            📈 Progression des scores dans la nuit
+          </h3>
+          <HistoryChart snapshots={snapshots} />
+        </div>
+
+        <div className="mt-6">
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+            📊 Détail actuel par type de score
+          </h3>
+          <BreakdownChart breakdown={team.breakdown} />
+        </div>
+
+        <button
+          onClick={onClose}
+          className="mt-6 w-full rounded-lg border border-slate-700 py-2 text-sm
+            text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800"
+        >
+          Fermer (Échap)
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function PodiumCard({ team, place, onSelect }) {
   const score = useCountUp(team.score ?? 0)
   const sizes = ['text-2xl', 'text-xl', 'text-lg']
 
   return (
-    <div
-      className={`animate-slide-up flex flex-col items-center rounded-2xl border border-slate-700/60
-      bg-slate-900/80 p-5 ${PODIUM_GLOW[place]} ${place === 0 ? 'md:-translate-y-4' : ''}`}
+    <button
+      onClick={onSelect}
+      className={`animate-slide-up flex cursor-pointer flex-col items-center rounded-2xl border border-slate-700/60
+        bg-slate-900/80 p-5 text-center transition-transform hover:scale-[1.02]
+        ${PODIUM_GLOW[place]} ${place === 0 ? 'md:-translate-y-4' : ''}`}
       style={{ animationDelay: `${place * 120}ms` }}
     >
       <div className="text-4xl">{MEDALS[place]}</div>
-      <a
-        href={`https://github.com/${team.repo}`}
-        target="_blank"
-        rel="noreferrer"
-        className={`mt-2 ${sizes[place]} font-bold text-slate-100 hover:text-sky-400 transition-colors`}
-      >
+      <span className={`mt-2 ${sizes[place]} font-bold text-slate-100`}>
         {team.team}
-      </a>
+      </span>
       <div className="mt-1 font-mono text-3xl font-black text-emerald-400">
         {score.toFixed(1)}
       </div>
       <div className="mt-1 text-xs text-slate-500">points</div>
-      <div className="mt-3 w-full">
+      <div className="mt-3 w-full pointer-events-none">
         <BreakdownChart breakdown={team.breakdown} />
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -74,47 +138,46 @@ function RankDelta({ delta }) {
   return <span className="text-xs text-slate-600">—</span>
 }
 
-function TeamRow({ team, history, prevRank }) {
+function TeamRow({ team, history, prevRank, onSelect }) {
   const score = useCountUp(team.score ?? 0)
   const delta = prevRank != null ? prevRank - team.rank : 0
 
   return (
-    <li
-      className="animate-slide-up grid grid-cols-[3rem_1fr_9rem_10rem] items-center gap-4 rounded-xl
-      border border-slate-800 bg-slate-900/60 p-4 transition-colors hover:border-sky-600/50 hover:bg-slate-900"
-    >
-      <div className="flex flex-col items-center justify-center">
-        <span className="text-xl font-black text-slate-300">{team.rank}</span>
-        <RankDelta delta={delta} />
-      </div>
-      <div className="min-w-0">
-        <a
-          href={`https://github.com/${team.repo}`}
-          target="_blank"
-          rel="noreferrer"
-          className="truncate font-semibold text-slate-100 hover:text-sky-400 transition-colors"
-        >
-          {team.team}
-        </a>
-        <div className="mt-1">
-          <BreakdownChart breakdown={team.breakdown} />
+    <li>
+      <button
+        onClick={onSelect}
+        className="animate-slide-up grid w-full grid-cols-[3rem_1fr_9rem_10rem] cursor-pointer items-center gap-4 rounded-xl
+          border border-slate-800 bg-slate-900/60 p-4 text-left transition-colors
+          hover:border-sky-600/50 hover:bg-slate-900"
+      >
+        <div className="flex flex-col items-center justify-center">
+          <span className="text-xl font-black text-slate-300">{team.rank}</span>
+          <RankDelta delta={delta} />
         </div>
-      </div>
-      <Sparkline points={history[team.team]} />
-      <div className="text-right">
-        <div className="font-mono text-2xl font-black text-emerald-400">
-          {score.toFixed(1)}
+        <div className="min-w-0">
+          <span className="truncate font-semibold text-slate-100">
+            {team.team}
+          </span>
+          <div className="mt-1 pointer-events-none">
+            <BreakdownChart breakdown={team.breakdown} />
+          </div>
         </div>
-        {team.eligible ? (
-          <span className="text-[10px] uppercase tracking-wide text-slate-500">
-            éligible
-          </span>
-        ) : (
-          <span className="text-[10px] uppercase tracking-wide text-rose-400">
-            non éligible
-          </span>
-        )}
-      </div>
+        <Sparkline points={history[team.team]} />
+        <div className="text-right">
+          <div className="font-mono text-2xl font-black text-emerald-400">
+            {score.toFixed(1)}
+          </div>
+          {team.eligible ? (
+            <span className="text-[10px] uppercase tracking-wide text-slate-500">
+              éligible
+            </span>
+          ) : (
+            <span className="text-[10px] uppercase tracking-wide text-rose-400">
+              non éligible
+            </span>
+          )}
+        </div>
+      </button>
     </li>
   )
 }
@@ -124,7 +187,7 @@ export default function App() {
   const [history, setHistory] = useState({})
   const [prevRanks, setPrevRanks] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
-  const [showScoreDetails, setShowScoreDetails] = useState(false)
+  const [selected, setSelected] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -187,6 +250,7 @@ export default function App() {
                 key={podium[placeIdx].team}
                 team={podium[placeIdx]}
                 place={placeIdx}
+                onSelect={() => setSelected(podium[placeIdx])}
               />
             ) : null,
           )}
@@ -195,26 +259,9 @@ export default function App() {
 
       {/* Liste */}
       <main className="mx-auto mt-8 max-w-5xl px-6 pb-16">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-slate-100">
-            Classement général
-          </h2>
-          <button
-            type="button"
-            aria-expanded={showScoreDetails}
-            aria-controls="score-details"
-            onClick={() => setShowScoreDetails((visible) => !visible)}
-            className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold
-              text-slate-200 transition-colors hover:border-sky-500 hover:text-sky-300"
-          >
-            {showScoreDetails ? 'Masquer les détails' : 'Détails des scores'}
-          </button>
-        </div>
-        {showScoreDetails && (
-          <div id="score-details" className="mt-3">
-            <ScoreBreakdownCharts teams={teams} />
-          </div>
-        )}
+        <p className="mb-3 text-center text-xs text-slate-600">
+          💡 Cliquez sur une équipe pour voir sa progression détaillée
+        </p>
         {rest.length === 0 && podium.length === 0 && (
           <p className="animate-pulse text-center text-slate-500">
             Chargement des usines…
@@ -227,10 +274,20 @@ export default function App() {
               team={t}
               history={history}
               prevRank={prevRanks?.[t.team]}
+              onSelect={() => setSelected(t)}
             />
           ))}
         </ul>
       </main>
+
+      {/* Modal détail équipe */}
+      {selected && (
+        <TeamDetail
+          team={selected}
+          history={history}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   )
 }
