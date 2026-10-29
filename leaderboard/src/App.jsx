@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Sparkline from './components/Sparkline.jsx'
 import BreakdownChart from './components/BreakdownChart.jsx'
+import ScoreBreakdownCharts from './components/ScoreBreakdownCharts.jsx'
 import { loadLeaderboard, loadHistory } from './lib/data.js'
 
 const REFRESH_MS = 60_000 // rafraîchissement toutes les 60 s en local
@@ -123,6 +124,7 @@ export default function App() {
   const [history, setHistory] = useState({})
   const [prevRanks, setPrevRanks] = useState(null)
   const [lastUpdate, setLastUpdate] = useState(null)
+  const [showScoreDetails, setShowScoreDetails] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -193,6 +195,26 @@ export default function App() {
 
       {/* Liste */}
       <main className="mx-auto mt-8 max-w-5xl px-6 pb-16">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-slate-100">
+            Classement général
+          </h2>
+          <button
+            type="button"
+            aria-expanded={showScoreDetails}
+            aria-controls="score-details"
+            onClick={() => setShowScoreDetails((visible) => !visible)}
+            className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold
+              text-slate-200 transition-colors hover:border-sky-500 hover:text-sky-300"
+          >
+            {showScoreDetails ? 'Masquer les détails' : 'Détails des scores'}
+          </button>
+        </div>
+        {showScoreDetails && (
+          <div id="score-details" className="mt-3">
+            <ScoreBreakdownCharts teams={teams} />
+          </div>
+        )}
         {rest.length === 0 && podium.length === 0 && (
           <p className="animate-pulse text-center text-slate-500">
             Chargement des usines…
