@@ -9,7 +9,7 @@ permissions:
   issues: write # labels + commentaires
 
 env:
-  QUALITY_WORKFLOW_REF: v1
+  QUALITY_WORKFLOW_REF: v0
 
 concurrency:
   group: inscription-${{ github.event.issue.number }}
