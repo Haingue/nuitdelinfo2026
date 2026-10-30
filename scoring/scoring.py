@@ -12,7 +12,7 @@ Barème (cf. énoncé) :
   C. Bonus/malus : +5 / +3 / -5 / -10
 
 Usage :
-  python scoring.py --org votre-org --repo tpsc-challenge
+  python scoring.py --org Haingue --repo nuitdelinfo2026
 Variables d'environnement :
   GITHUB_TOKEN   : PAT avec accès public_repo (lecture issues + repos)
   SONAR_TOKEN    : token SonarCloud lecture
