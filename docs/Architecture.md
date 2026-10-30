@@ -25,7 +25,7 @@ Trois acteurs, deux repos, zéro serveur :
 ```
 
 - **Repos des équipes** : code + fichier d'appel + secret `SONAR_TOKEN`. Rien d'autre à configurer.
-- **Repo du défi** : toute la mécanique. Les équipes ne peuvent modifier aucune règle : elles appellent un workflow *réutilisable* pointé sur ce repo (tag `v0`), dont la logique vit ici.
+- **Repo du défi** : toute la mécanique. Les équipes ne peuvent modifier aucune règle : elles appellent un workflow *réutilisable* pointé sur ce repo (tag `v1`), dont la logique vit ici.
 
 ## 2. Les composants
 
@@ -62,7 +62,7 @@ Trois acteurs, deux repos, zéro serveur :
 
 | Menace                       | Parade                                                                                                                             | Où                               |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Modifier le workflow qualité | Workflow réutilisable : la logique vit dans notre repo, tag `v0` contrôlé par nous                                                 | architecture                     |
+| Modifier le workflow qualité | Workflow réutilisable : la logique vit dans notre repo, tag `v1` contrôlé par nous                                                 | architecture                     |
 | Modifier le fichier d'appel  | Hash SHA-256 du bloc vs `teams/<slug>.yml`, à chaque push                                                                          | quality.yml/conformité           |
 | Usurper une autre équipe     | Empreinte = SHA-256(repo\_id + team + **sel secret**) ; vérifiée en CI (valeur enregistrée) **et** en batch (recalcul avec le sel) | inscription + conformité + batch |
 | Exclure des fichiers du scan | `-Dsonar.exclusions` imposé dans notre workflow ; paramètres Sonar re-vérifiés via API                                             | quality.yml/sonar + batch        |
@@ -93,7 +93,7 @@ Trois acteurs, deux repos, zéro serveur :
 
 1. Créer les labels `inscription` et `inscrit ✅`, les secrets `GH_PAT`/`SONAR_TOKEN`/`IDENTITY_SALT`, la variable `WINDOW_START`.
 2. Configurer l'organisation **SonarCloud** du challenge et renseigner `SONAR_ORG` dans `quality.yml`.
-3. Pousser tous les workflows ; taguer le workflow qualité : `git tag -f v0 && git push -f origin v0`.
+3. Pousser tous les workflows ; taguer le workflow qualité : `git tag -f v1 && git push -f origin v1`.
 4. Activer GitHub Pages (source : GitHub Actions).
 5. Test bout en bout avec un repo pilote (inscription réelle, push, batch manuel, vérification du leaderboard).
 6. Le jour J : régler `WINDOW_START` à l'ouverture ; surveiller les 403/429 dans les logs batch.

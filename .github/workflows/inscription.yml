@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  QUALITY_WORKFLOW_REF: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v0
+  QUALITY_WORKFLOW_REF: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1
 
 jobs:
   inscrire:
@@ -127,15 +127,12 @@ jobs:
             push:
               branches: [main]
             workflow_dispatch:
-          # OBLIGATOIRE : un workflow réutilisable ne peut pas avoir plus de
-          # permissions que celles accordées par le workflow appelant. Le
-          # workflow Toyota (quality.yml) exige contents:read + issues:read.
           permissions:
             contents: read
             issues: read
           jobs:
             tps-challenge:
-              uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1
+              uses: $QUALITY_WORKFLOW_REF
               with:
                 team-name: "${{ steps.form.outputs.team-name }}"
                 identity-hash: "$IDENTITY_HASH"
