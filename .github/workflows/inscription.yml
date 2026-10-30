@@ -58,7 +58,7 @@ jobs:
             echo "::error::Une équipe avec ce nom est déjà inscrite."
             FAIL=1
           fi
-          if grep -rq "repo_full: ${REPO}$" teams/ 2>/dev/null; then
+          if grep -rq "repo: ${REPO}$" teams/ 2>/dev/null; then
             echo "::error::Ce repository est déjà inscrit."
             FAIL=1
           fi
@@ -117,7 +117,7 @@ jobs:
           # Équipe : ${{ steps.form.outputs.team-name }}
           # Repo   : ${{ steps.form.outputs.repo-full }}
           team-name: "${{ steps.form.outputs.team-name }}"
-          repo_full: "${{ steps.form.outputs.repo-full }}"
+          repo: "${{ steps.form.outputs.repo-full }}"
           identity-hash: "$IDENTITY_HASH"
           sonar-org: "${{ steps.form.outputs.sonar-org }}"
 

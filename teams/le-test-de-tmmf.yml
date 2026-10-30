@@ -2,7 +2,7 @@
 # Équipe : Le test de TMMF
 # Repo   : Haingue/test-nuitdelinfo2026
 team-name: "Le test de TMMF"
-repo_full: "Haingue/test-nuitdelinfo2026"
+repo: "Haingue/test-nuitdelinfo2026"
 identity-hash: "934384f69d4163037c5f68087d2729567582fef78860be627aabf51c141f7f5d"
 sonar-org: "haingue"
 
