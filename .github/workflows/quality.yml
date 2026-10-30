@@ -70,10 +70,15 @@ jobs:
       - name: Comparer les hash (bloc d'appel == bloc généré par Toyota)
         run: |
           # Le fichier d'équipe contient des métadonnées PUIS le bloc d'appel
-          # délimité par le marqueur "# === FICHIER D'APPEL — ne pas modifier ===".
-          awk 'f{print} /^# === FICHIER D.APPEL/{f=1}' /tmp/equipe.yml > /tmp/attendu.yml
+          # délimité par les marqueurs "# === FICHIER D'APPEL" et "# === FIN DU FICHIER".
+          # On extrait le bloc ENTRE les deux marqueurs (exclusifs) : c'est
+          # exactement ce que l'équipe doit copier, byte pour byte.
+          awk 'f && /^# === FIN DU FICHIER/{exit} f{print} /^# === FICHIER D.APPEL/{f=1}' /tmp/equipe.yml > /tmp/attendu.yml
           if [ ! -s /tmp/attendu.yml ]; then
             echo "::error::Bloc d'appel introuvable dans le fichier d'équipe — contactez les organisateurs."
+            echo "--- Diagnostic : 30 premières lignes du fichier d'équipe ---"
+            head -30 /tmp/equipe.yml
+            echo "-----------------------------------------------------------"
             exit 1
           fi
           ATTENDU_SHA=$(sha256sum /tmp/attendu.yml | cut -d' ' -f1)
