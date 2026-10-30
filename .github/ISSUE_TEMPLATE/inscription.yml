@@ -27,6 +27,17 @@ body:
       placeholder: "https://github.com/mon-equipe/mon-projet"
     validations:
       required: true
+  - type: input
+    id: sonar-org
+    attributes:
+      label: Clé de votre organisation SonarCloud
+      description: >-
+        Créez-la d'abord sur sonarcloud.io via « Import repository from GitHub »
+        (faites-le avec le compte PROPRIÉTAIRE du repo). La clé apparaît dans
+        l'URL : sonarcloud.io/VOTRE-CLE. ⚠️ Ce n'est PAS forcément votre login GitHub.
+      placeholder: "ex : FabienH (pas votre login GitHub si votre display name diffère)"
+    validations:
+      required: true
   - type: checkboxes
     id: reglement
     attributes:

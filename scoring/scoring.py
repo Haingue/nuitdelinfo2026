@@ -2,7 +2,7 @@
 """
 TPS Challenge — Calculateur de score (batch).
 
-S'exécute via GitHub Actions (schedule 15 min) dans votre-org/tpsc-challenge.
+S'exécute via GitHub Actions (schedule 15 min) dans Haingue/nuitdelinfo2026.
 Pour chaque équipe inscrite (issues du repo), interroge les APIs SonarCloud
 et GitHub, applique le barème officiel et produit data/leaderboard.json.
 
@@ -68,17 +68,15 @@ def sonar_get(path: str, token: str, **params) -> requests.Response:
 class Team:
     name: str
     repo_full: str            # "owner/repo"
+    sonar_org: str           # clé SonarCloud déclarée à l'inscription
     issue_number: int
 
     @property
     def project_key(self) -> str:
         owner, name = self.repo_full.split("/")
         return f"{owner}_{name}"
-
-    @property
-    def sonar_org(self) -> str:
-        # même convention que quality.yml : org SonarCloud = login GitHub owner
-        return self.repo_full.split("/")[0]
+    # NB : sonar_org ne peut PAS être dérivée du owner GitHub (SonarCloud
+    # base la clé sur le display name à l'import) : elle vient de teams/<slug>.yml.
 
 
 def load_teams(teams_dir: str = "teams") -> list[Team]:
@@ -97,7 +95,8 @@ def load_teams(teams_dir: str = "teams") -> list[Team]:
         if not data or "team-name" not in data:
             print(f"[warn] {path} invalide, ignoré", file=sys.stderr)
             continue
-        teams.append(Team(data["team-name"], data["repo"], issue_number=0))
+        teams.append(Team(data["team-name"], data["repo"],
+                          data.get("sonar-org", ""), issue_number=0))
     return teams
 
 

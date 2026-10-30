@@ -154,10 +154,11 @@ jobs:
             -Dsonar.python.version=3.11
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token de l'équipe (cf. procédure de l'énoncé)
-          # Organisation SonarCloud de l'ÉQUIPE, dérivée du owner GitHub du repo appelant.
-          # Convention : l'équipe crée son org SonarCloud EN IMPORTANT son repo GitHub
-          # -> clé de l'org = login GitHub du owner. Zéro configuration côté équipe.
-          SONAR_ORG: ${{ github.repository_owner }}
+          # Organisation SonarCloud de l'ÉQUIPE : déclarée à l'inscription,
+          # vérifiée contre le fichier d'équipe au step conformité
+          # (ne peut être déduite du login GitHub : SonarCloud base la clé
+          # sur le display name à l'import — ex. login "Haingue" -> org "FabienH")
+          SONAR_ORG: ${{ inputs.sonar-org }}
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Vérifier le Quality Gate (bloquant = Jidoka)

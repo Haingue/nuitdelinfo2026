@@ -35,8 +35,10 @@ jobs:
           TEAM_NAME=$(printf '%s' "$ISSUE_BODY" | awk '/^### Nom de votre équipe$/{getline; getline; print; exit}')
           REPO_URL=$(printf '%s' "$ISSUE_BODY" | awk '/^### URL de votre repository GitHub public$/{getline; getline; print; exit}')
           REPO_FULL=$(printf '%s' "$REPO_URL" | sed 's|https://github.com/||; s|/$||')
+          SONAR_ORG=$(printf '%s' "$ISSUE_BODY" | awk '/^### Clé de votre organisation SonarCloud$/{getline; getline; print; exit}')
           echo "team-name=$(echo "$TEAM_NAME" | tr -d '\r')" >> "$GITHUB_OUTPUT"
           echo "repo-full=$(echo "$REPO_FULL" | tr -d '\r')" >> "$GITHUB_OUTPUT"
+          echo "sonar-org=$(echo "$SONAR_ORG" | tr -d '\r')" >> "$GITHUB_OUTPUT"
           # slug de fichier : minuscules, tirets
           SLUG=$(echo "$TEAM_NAME" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-' '-' | sed 's/^-*//; s/-*$//')
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
@@ -117,6 +119,7 @@ jobs:
           team-name: "${{ steps.form.outputs.team-name }}"
           repo: "${{ steps.form.outputs.repo-full }}"
           identity-hash: "$IDENTITY_HASH"
+          sonar-org: "${{ steps.form.outputs.sonar-org }}"
 
           # === FICHIER D'APPEL — ne pas modifier ===
           name: "TPS Challenge — Appel de l'usine qualité"
@@ -124,15 +127,19 @@ jobs:
             push:
               branches: [main]
             workflow_dispatch:
+          # OBLIGATOIRE : un workflow réutilisable ne peut pas avoir plus de
+          # permissions que celles accordées par le workflow appelant. Le
+          # workflow Toyota (quality.yml) exige contents:read + issues:read.
           permissions:
             contents: read
             issues: read
           jobs:
             tps-challenge:
-              uses: $QUALITY_WORKFLOW_REF
+              uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1
               with:
                 team-name: "${{ steps.form.outputs.team-name }}"
                 identity-hash: "$IDENTITY_HASH"
+                sonar-org: "${{ steps.form.outputs.sonar-org }}"
               secrets: inherit
           # === FIN DU FICHIER D'APPEL ===
           YML
