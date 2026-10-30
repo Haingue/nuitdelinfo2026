@@ -5,15 +5,15 @@ on:
     types: [opened]
 
 permissions:
-  contents: write # commit de teams/<team>.yml
-  issues: write # labels + commentaires
-
-env:
-  QUALITY_WORKFLOW_REF: v0
+  contents: write       # commit de teams/<team>.yml
+  issues: write          # labels + commentaires
 
 concurrency:
   group: inscription-${{ github.event.issue.number }}
   cancel-in-progress: false
+
+env:
+  QUALITY_WORKFLOW_REF: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v0
 
 jobs:
   inscrire:
@@ -32,8 +32,7 @@ jobs:
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          TEAM_NAME=$(printf '%s' "$ISSUE_BODY" | sed -n 's/^### Nom de votre équipe$//;T;p;' >/dev/null; \
-            printf '%s' "$ISSUE_BODY" | awk '/^### Nom de votre équipe$/{getline; getline; print; exit}')
+          TEAM_NAME=$(printf '%s' "$ISSUE_BODY" | awk '/^### Nom de votre équipe$/{getline; getline; print; exit}')
           REPO_URL=$(printf '%s' "$ISSUE_BODY" | awk '/^### URL de votre repository GitHub public$/{getline; getline; print; exit}')
           REPO_FULL=$(printf '%s' "$REPO_URL" | sed 's|https://github.com/||; s|/$||')
           echo "team-name=$(echo "$TEAM_NAME" | tr -d '\r')" >> "$GITHUB_OUTPUT"
@@ -119,23 +118,20 @@ jobs:
           repo: "${{ steps.form.outputs.repo-full }}"
           identity-hash: "$IDENTITY_HASH"
 
-          # === FICHIER D'APPEL À COPIER TEL QUEL DANS VOTRE REPO ===
+          # === FICHIER D'APPEL — ne pas modifier ===
           name: "TPS Challenge — Appel de l'usine qualité"
           on:
             push:
               branches: [main]
             workflow_dispatch:
-          permissions:
-            contents: read
-            issues: read
           jobs:
             tps-challenge:
-              uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@$QUALITY_WORKFLOW_REF
+              uses: $QUALITY_WORKFLOW_REF
               with:
                 team-name: "${{ steps.form.outputs.team-name }}"
                 identity-hash: "$IDENTITY_HASH"
               secrets: inherit
-          # === FIN DU FICHIER ===
+          # === FIN DU FICHIER D'APPEL ===
           YML
 
       # ---------------------------------------------------------
@@ -154,23 +150,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SLUG: ${{ steps.form.outputs.slug }}
         run: |
-          gh issue comment ${{ github.event.issue.number }} --body "$(cat <<COMMENT
-          ## ✅ Inscription validée — bienvenue ${{ steps.form.outputs.team-name }} !
-
-          Votre fichier d'appel personnalisé est prêt :
-
-          1. Copiez le bloc ci-dessous dans un fichier **\`.github/workflows/appeler-tps-challenge.yml\`** de votre repository (**sans rien modifier**) :
-
-          \`\`\`yaml
-          $(sed -n '/# ↓↓/,$p' "teams/${SLUG}.yml" | sed '1d')
-          \`\`\`
-
-          2. Créez votre token SonarCloud et ajoutez-le en secret \`SONAR_TOKEN\` dans votre repo (cf. l'énoncé du défi).
-          3. Poussez sur \`main\` : l'usine qualité démarre automatiquement.
-          4. Suivez votre progression sur le leaderboard ! 🏭
-
-          ⚠️ **Ne modifiez jamais ce fichier** : son intégrité est vérifiée par hash à chaque exécution.
-          COMMENT
-          )"
+          # Message construit dans un fichier : pas de heredoc non quoté
+          # (les backticks Markdown seraient interprétés par bash !).
+          {
+            echo "## ✅ Inscription validée — bienvenue ${{ steps.form.outputs.team-name }} !"
+            echo ""
+            echo "Votre fichier d'appel personnalisé est prêt :"
+            echo ""
+            echo '1. Copiez le bloc ci-dessous dans un fichier **`.github/workflows/appeler-tps-challenge.yml`** de votre repository (**sans rien modifier**) :'
+            echo ""
+            echo '```yaml'
+            # bloc d'appel ENTRE les marqueurs (exclusifs) — le même que la conformité CI
+            awk 'f && /^# === FIN DU FICHIER/{exit} f{print} /^# === FICHIER D.APPEL/{f=1}' "teams/${SLUG}.yml"
+            echo '```'
+            echo ""
+            echo '2. Créez votre token SonarCloud et ajoutez-le en secret `SONAR_TOKEN` dans votre repo (cf. l''énoncé du défi).'
+            echo '3. Poussez sur `main` : l''usine qualité démarre automatiquement.'
+            echo '4. Suivez votre progression sur le leaderboard ! 🏭'
+            echo ""
+            echo '⚠️ **Ne modifiez jamais ce fichier** : son intégrité est vérifiée par hash à chaque exécution.'
+          } > /tmp/comment.md
+          gh issue comment ${{ github.event.issue.number }} --body-file /tmp/comment.md
           gh issue edit ${{ github.event.issue.number }} --remove-label "inscription"
           gh issue edit ${{ github.event.issue.number }} --add-label "inscrit ✅"

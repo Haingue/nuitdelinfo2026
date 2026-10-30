@@ -83,8 +83,6 @@ def load_teams(teams_dir: str = "teams") -> list[Team]:
     (team-name, repo, identity-hash). L'issue d'inscription n'est qu'un
     point d'entrée, le batch n'en dépend plus.
     """
-    import glob
-
     teams = []
     for path in glob.glob(f"{teams_dir}/*.yml"):
         with open(path, encoding="utf-8") as f:

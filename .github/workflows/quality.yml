@@ -120,7 +120,7 @@ jobs:
 
       - name: Scanner le projet (paramétrage imposé)
         run: |
-          PROJECT_KEY="${{ github.repository_owner }}_${{ github.event.repository.name }}"
+          PROJECT_KEY=$(printf '%s' "${{ github.repository }}" | tr '/' '_')
           sonar-scanner \
             -Dsonar.projectKey="$PROJECT_KEY" \
             -Dsonar.organization="${SONAR_ORG}" \
