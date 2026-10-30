@@ -1,0 +1,24 @@
+# TPS Challenge — fichier d'équipe généré automatiquement
+# Équipe : TMMF_TEST
+# Repo   : Haingue/test-nuitdelinfo2026
+team-name: "TMMF_TEST"
+repo: "Haingue/test-nuitdelinfo2026"
+identity-hash: "9b9421f3864a6004333ca3e1eb303ed4c325ec3199d8cc44b2943b8e95393632"
+
+# ↓↓ Fichier d'appel à copier TEL QUEL dans votre repo ↓↓
+name: "TPS Challenge — Appel de l'usine qualité"
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: read
+jobs:
+  tps-challenge:
+    uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v0
+    with:
+      team-name: "TMMF_TEST"
+      identity-hash: "9b9421f3864a6004333ca3e1eb303ed4c325ec3199d8cc44b2943b8e95393632"
+    secrets: inherit
+# ↑↑ NE PAS MODIFIER — vérifié par hash à chaque exécution ↑↑
