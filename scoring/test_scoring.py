@@ -9,6 +9,23 @@ import requests
 import scoring
 
 
+class LoggingTests(unittest.TestCase):
+    def test_api_logs_show_urls_and_status_without_credentials(self):
+        response = Mock(status_code=200)
+        response.url = 'https://storage.example/report?signature=secret-signature'
+        with patch.object(scoring.requests, 'get', return_value=response), \
+                self.assertLogs(scoring.logger, level='INFO') as logs:
+            scoring.gh_get('https://api.github.com/repos/owner/repo', 'github-secret')
+            scoring.sonar_get('/measures/component', 'sonar-secret', component='owner_repo')
+        output = '\n'.join(logs.output)
+        self.assertIn('https://api.github.com/repos/owner/repo', output)
+        self.assertIn('https://sonarcloud.io/api/measures/component', output)
+        self.assertIn('owner_repo', output)
+        self.assertIn('HTTP 200', output)
+        for secret in ('github-secret', 'sonar-secret', 'secret-signature'):
+            self.assertNotIn(secret, output)
+
+
 class DependencyVulnsTests(unittest.TestCase):
     def setUp(self):
         self.team = scoring.Team('Test', 'owner/repo', 'org', 0)

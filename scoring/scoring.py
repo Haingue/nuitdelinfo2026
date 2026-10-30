@@ -25,6 +25,7 @@ import glob
 import hashlib
 import io
 import json
+import logging
 import math
 import os
 import sys
@@ -39,6 +40,7 @@ import yaml
 
 GITHUB_API = "https://api.github.com"
 SONAR_API = "https://sonarcloud.io/api"
+logger = logging.getLogger(__name__)
 
 # Notes Sonar -> points
 MAINTENABILITY_POINTS = {"A": 15, "B": 10, "C": 5, "D": 0, "E": 0}
@@ -48,19 +50,26 @@ MIN_COMMITS = 20                # seuil d'éligibilité trajectoire
 
 
 def gh_get(url: str, token: str, **params) -> requests.Response:
+    logger.info("GitHub GET %s params=%s", url, params)
     r = requests.get(url, headers={
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
     }, params=params, timeout=30)
+    logger.info("GitHub HTTP %s pour %s", r.status_code, url)
     if r.status_code == 403:  # rate limit : backoff simple
-        time.sleep(int(r.headers.get("Retry-After", 60)))
+        delay = int(r.headers.get("Retry-After", 60))
+        logger.warning("GitHub 403 pour %s : nouvelle tentative dans %s s", url, delay)
+        time.sleep(delay)
         return gh_get(url, token, **params)
     return r
 
 
 def sonar_get(path: str, token: str, **params) -> requests.Response:
-    return requests.get(f"{SONAR_API}{path}", auth=(token, ""),
-                        params=params, timeout=30)
+    logger.info("SonarCloud GET %s%s params=%s", SONAR_API, path, params)
+    response = requests.get(f"{SONAR_API}{path}", auth=(token, ""),
+                            params=params, timeout=30)
+    logger.info("SonarCloud HTTP %s pour %s%s", response.status_code, SONAR_API, path)
+    return response
 
 
 # ----------------------------------------------------------------------
@@ -90,6 +99,7 @@ def load_teams(teams_dir: str = "teams") -> list[Team]:
     """
     import glob
 
+    logger.info("Chargement des equipes depuis %s", os.path.abspath(teams_dir))
     teams = []
     for path in glob.glob(f"{teams_dir}/*.yml"):
         with open(path, encoding="utf-8") as f:
@@ -99,6 +109,11 @@ def load_teams(teams_dir: str = "teams") -> list[Team]:
             continue
         teams.append(Team(data["team-name"], data["repo"],
                           data.get("sonar-org", ""), issue_number=0))
+        logger.info("Equipe chargee : %s | https://github.com/%s | Sonar org=%s | fichier=%s",
+                    teams[-1].name, teams[-1].repo_full, teams[-1].sonar_org, path)
+    logger.info("%s equipe(s) chargee(s)", len(teams))
+    if not teams:
+        logger.warning("Aucune equipe trouvee : verifier le dossier teams et le repertoire courant")
     return teams
 
 
@@ -130,7 +145,9 @@ def fetch_gate_current(team: Team, token: str) -> bool:
     r = sonar_get("/quality_gates/project_status", token,
                   project=team.project_key, organization=team.sonar_org,
                   branch="main")
-    return r.json().get("projectStatus", {}).get("status") == "OK"
+    status = r.json().get("projectStatus", {}).get("status")
+    logger.info("[%s] Quality Gate : %s", team.repo_full, status or "indisponible")
+    return status == "OK"
 
 
 def fetch_quality_measures(team: Team, token: str) -> dict:
@@ -140,6 +157,7 @@ def fetch_quality_measures(team: Team, token: str) -> dict:
                   metricKeys="reliability_rating,security_rating,sqale_rating,"
                              "coverage,duplicated_lines_density")
     if r.status_code != 200:
+        logger.warning("[%s] Mesures Sonar indisponibles : HTTP %s", team.repo_full, r.status_code)
         return {}
     return {m["metric"]: m.get("value")
             for m in r.json().get("component", {}).get("measures", [])}
@@ -217,11 +235,14 @@ def heijunka_score(commit_times: list[datetime]) -> float:
 
 
 def score_team(team: Team, cfg) -> tuple[Score, dict]:
+    logger.info("Debut scoring : %s | https://github.com/%s | projet Sonar=%s | org=%s",
+                team.name, team.repo_full, team.project_key, team.sonar_org)
     s = Score()
 
     # --- Identité & éligibilité -------------------------------------
     ident = check_identity(team, cfg.gh_token, cfg.salt)
     if not ident["ok"]:
+        logger.warning("[%s] Evaluation interrompue : %s", team.repo_full, ident["reason"])
         return s, {"error": ident["reason"]}
 
     # --- A. Qualité finale (60) --------------------------------------
@@ -237,6 +258,8 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
     crit, high = fetch_dependency_vulns(team, cfg.gh_token)
     if crit == 0 and high == 0:
         s.quality += 5
+    logger.info("[%s] Qualite=%s/60 | mesures=%s | Trivy CRITICAL=%s HIGH=%s",
+                team.repo_full, s.quality, measures, crit, high)
 
     # --- B. Kaizen (40) ----------------------------------------------
     history = fetch_scan_history(team, cfg.sonar_token, cfg.window_start)
@@ -265,6 +288,9 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
 
     # Heijunka (10)
     commits = fetch_commits(team, cfg.gh_token, cfg.window_start)
+    logger.info("[%s] Depuis %s : %s commits | %s analyses Sonar | %s runs CI examines | %s redressements | %s snapshots archives",
+                team.repo_full, cfg.window_start.isoformat(), len(commits),
+                len(history), len(runs), recoveries, len(archive))
     times = [datetime.fromisoformat(c["commit"]["author"]["date"].replace("Z", "+00:00"))
              for c in commits]
     s.heijunka = heijunka_score(times)
@@ -279,6 +305,9 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
 
     s.total = round(s.quality + s.pente + s.resilience + s.heijunka + s.bonus, 2)
     s.eligible = len(commits) >= MIN_COMMITS and gate_current
+    logger.info("[%s] Score total=%s | qualite=%s pente=%s resilience=%s heijunka=%s bonus=%s | eligible=%s (commits=%s/%s, gate=%s)",
+                team.repo_full, s.total, s.quality, s.pente, s.resilience,
+                s.heijunka, s.bonus, s.eligible, len(commits), MIN_COMMITS, gate_current)
 
     return s, {"measures": measures, "commits": len(commits),
                "recoveries": recoveries, "identity": ident,
@@ -295,8 +324,11 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
         runs = [run for run in fetch_workflow_runs(team, token)
                 if run.get("head_branch") == "main"]
         if not runs:
+            logger.warning("[%s] Trivy indisponible : aucun run termine sur main", team.repo_full)
             return (-1, -1)
         latest = max(runs, key=lambda run: run["created_at"])
+        logger.info("[%s] Run Trivy selectionne : https://github.com/%s/actions/runs/%s (date=%s)",
+                    team.repo_full, team.repo_full, latest["id"], latest["created_at"])
         response = gh_get(
             f"{GITHUB_API}/repos/{team.repo_full}/actions/runs/{latest['id']}/artifacts",
             token, per_page=100,
@@ -306,7 +338,10 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
                          if entry.get("name") == "trivy-report"
                          and not entry.get("expired", False)), None)
         if artifact is None:
+            logger.warning("[%s] Trivy indisponible : artefact absent ou expire sur le run %s",
+                           team.repo_full, latest["id"])
             return (-1, -1)
+        logger.info("[%s] Telechargement artefact trivy-report id=%s", team.repo_full, artifact["id"])
         response = gh_get(
             f"{GITHUB_API}/repos/{team.repo_full}/actions/artifacts/{artifact['id']}/zip",
             token,
@@ -316,6 +351,7 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
             report = json.loads(archive.read("trivy-report.json"))
         results = report["Results"]
         if not isinstance(results, list):
+            logger.warning("[%s] Trivy invalide : Results n'est pas une liste", team.repo_full)
             return (-1, -1)
         critical, high = 0, 0
         for result in results:
@@ -323,14 +359,17 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
                 not package.get("Version")
                 for package in result.get("Packages", [])
             ):
+                logger.warning("[%s] Trivy incomplet : versions non resolues pour %s, aucun point supply chain",
+                               team.repo_full, result.get("Target", "cible inconnue"))
                 return (-1, -1)
             for vulnerability in result.get("Vulnerabilities", []):
                 critical += vulnerability.get("Severity") == "CRITICAL"
                 high += vulnerability.get("Severity") == "HIGH"
+            logger.info("[%s] Trivy : CRITICAL=%s HIGH=%s", team.repo_full, critical, high)
         return critical, high
     except (requests.RequestException, zipfile.BadZipFile, KeyError,
             ValueError, TypeError, AttributeError) as error:
-        print(f"[warn] Trivy {team.repo_full}: {error}", file=sys.stderr)
+        logger.warning("[%s] Trivy indisponible : %s", team.repo_full, type(error).__name__)
         return (-1, -1)
 
 
@@ -342,11 +381,17 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
 # 15 min même si l'API Sonar ne donne qu'un instantané.
 # ----------------------------------------------------------------------
 def main() -> None:
+    logging.basicConfig(level=logging.INFO,
+                        format="%(asctime)s %(levelname)s %(message)s")
     p = argparse.ArgumentParser()
     p.add_argument("--org", required=True)
     p.add_argument("--repo", required=True)
     p.add_argument("--window-start", default=os.environ.get("WINDOW_START"))
     args = p.parse_args()
+    logger.info("Batch demarre | depot du defi=https://github.com/%s/%s | cwd=%s",
+                args.org, args.repo, os.getcwd())
+    if not args.window_start:
+        logger.warning("WINDOW_START absent : la fenetre commence maintenant, les commits anterieurs ne seront pas comptes")
 
     cfg = argparse.Namespace(
         gh_token=os.environ["GITHUB_TOKEN"],
@@ -357,13 +402,15 @@ def main() -> None:
         ),
         history_archive={},
     )
+    logger.info("Debut de la fenetre de scoring : %s", cfg.window_start.isoformat())
 
     # Historique des scores partiels accumulés au fil des batches
     try:
         with open("data/scores-history.json", encoding="utf-8") as f:
             cfg.history_archive = {k: v for k, v in json.load(f).items()}
+        logger.info("Historique charge : %s equipes", len(cfg.history_archive))
     except FileNotFoundError:
-        pass
+        logger.info("Aucun historique precedent : premier snapshot de progression")
 
     teams = load_teams("teams")
     leaderboard = []
@@ -398,6 +445,8 @@ def main() -> None:
                 "details": details,
             })
         except Exception as e:  # une équipe ne casse jamais le batch
+            logger.error("Echec scoring pour %s | https://github.com/%s | erreur=%s",
+                         team.name, team.repo_full, type(e).__name__)
             leaderboard.append({"team": team.name, "error": str(e)})
 
     leaderboard.sort(key=lambda e: e.get("score", -999), reverse=True)
@@ -409,6 +458,9 @@ def main() -> None:
         json.dump(leaderboard, f, ensure_ascii=False, indent=2)
     with open("data/scores-history.json", "w", encoding="utf-8") as f:
         json.dump(cfg.history_archive, f, ensure_ascii=False, indent=2)
+    logger.info("Batch termine : %s equipes | classement=%s | historique=%s",
+                len(leaderboard), os.path.abspath("data/leaderboard.json"),
+                os.path.abspath("data/scores-history.json"))
     print(f"OK — {len(leaderboard)} équipes -> data/leaderboard.json")
 
 
