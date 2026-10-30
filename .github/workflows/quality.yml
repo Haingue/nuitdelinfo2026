@@ -195,6 +195,9 @@ jobs:
     name: 'Supply chain — audit dépendances'
     needs: conformite
     runs-on: ubuntu-latest
+    outputs:
+      critical: ${{ steps.metrics.outputs.critical }}
+      high: ${{ steps.metrics.outputs.high }}
     steps:
       - uses: actions/checkout@v4
 
@@ -211,11 +214,12 @@ jobs:
           TRIVY_OFFLINE_SCAN: 'true'
 
       - name: Extraire les métriques supply chain
+        id: metrics
         run: |
           CRIT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json | paste -sd+ | bc)
           HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json | paste -sd+ | bc)
-          echo "CRIT_COUNT=${CRIT:-0}" >> "$GITHUB_ENV"
-          echo "HIGH_COUNT=${HIGH:-0}" >> "$GITHUB_ENV"
+          echo "critical=${CRIT:-0}" >> "$GITHUB_OUTPUT"
+          echo "high=${HIGH:-0}" >> "$GITHUB_OUTPUT"
           echo "::notice::CRIT=${CRIT:-0} HIGH=${HIGH:-0}"
 
       - uses: actions/upload-artifact@v4
@@ -231,15 +235,18 @@ jobs:
     name: 'Heijunka — régularité'
     needs: conformite
     runs-on: ubuntu-latest
+    outputs:
+      commits: ${{ steps.metrics.outputs.commits }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Contrôle du nombre minimum de commits
+        id: metrics
         run: |
           COUNT=$(git rev-list --count HEAD)
-          echo "COMMIT_COUNT=$COUNT" >> "$GITHUB_ENV"
+          echo "commits=$COUNT" >> "$GITHUB_OUTPUT"
           if [ "$COUNT" -lt 20 ]; then
             echo "::warning::Seulement $COUNT commits — minimum 20 requis pour être classé (trajectoire Kaizen)."
           fi
@@ -267,14 +274,58 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Synthèse
+        env:
+          TEAM_NAME: ${{ inputs.team-name }}
+          TEAM_REPO: ${{ github.repository }}
+          CONFORMITE: ${{ needs.conformite.result }}
+          SONAR: ${{ needs.sonar.result }}
+          CRIT_COUNT: ${{ needs.dependances.outputs.critical }}
+          HIGH_COUNT: ${{ needs.dependances.outputs.high }}
+          COMMIT_COUNT: ${{ needs.rythme.outputs.commits }}
         run: |
           {
-          echo "### 🏭 Rapport d'usine — ${{ inputs.team-name }}"
+          echo "### 🏭 Rapport d'usine — ${TEAM_NAME}"
           echo ""
           echo "| Contrôle | Statut |"
           echo "|---|---|"
-          echo "| Conformité & identité | ${{ needs.conformite.result }} |"
-          echo "| Quality Gate SonarCloud | ${{ needs.sonar.result }} |"
-          echo "| Vulnérabilités CRITICAL/HIGH | ${CRIT_COUNT:-?}/${HIGH_COUNT:-?} |"
-          echo "| Commits | ${COMMIT_COUNT:-?} (min. 20) |"
+          echo "| Conformité & identité | ${CONFORMITE} |"
+          echo "| Quality Gate SonarCloud | ${SONAR} |"
+          echo "| Vulnérabilités CRITICAL/HIGH détectées | ${CRIT_COUNT:-indisponible}/${HIGH_COUNT:-indisponible} |"
+          echo "| Commits du dépôt (toutes dates) | ${COMMIT_COUNT:-indisponible} |"
+          echo ""
+          echo "Les versions non résolues par Trivy ne permettent pas de conclure à l'absence de vulnérabilités. Le seuil de 20 commits pour le classement porte sur la fenêtre du défi."
+          echo ""
+          echo "### Score officiel du dernier batch"
+          echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if curl -sfL --connect-timeout 10 --max-time 30 \
+              "https://raw.githubusercontent.com/${CHALLENGE_REPO}/main/data/leaderboard.json" \
+              -o /tmp/leaderboard.json \
+              && jq -e --arg repo "$TEAM_REPO" \
+                'if type == "array" then [.[] | select(.repo == $repo and (.score | type == "number"))][0] // empty else empty end' \
+                /tmp/leaderboard.json > /tmp/score-equipe.json; then
+            jq -r '
+              "**Score : \(.score) points** · Rang : \(.rank // "indisponible")",
+              "",
+              "Classement : \(if .eligible then "éligible" else "non éligible" end)",
+              "",
+              "Dernière mise à jour : \(.timestamp // "indisponible")",
+              "",
+              "| Composante | Points |",
+              "|---|---:|",
+              "| Qualité | \(.breakdown.qualite // 0) / 60 |",
+              "| Progression Kaizen | \(.breakdown.pente // 0) / 20 |",
+              "| Résilience | \(.breakdown.resilience // 0) / 10 |",
+              "| Régularité Heijunka | \(.breakdown.heijunka // 0) / 10 |",
+              "| Bonus / malus | \(.breakdown.bonus_malus // 0) |"
+            ' /tmp/score-equipe.json >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Score indisponible : aucun score publié pour ce dépôt ou données temporairement inaccessibles." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          {
+          echo ""
+          echo "Le batch est planifié toutes les 15 minutes. Ce score peut ne pas encore inclure cette exécution."
+          echo ""
+          echo "[Suivre les mises à jour du classement](https://github.com/${CHALLENGE_REPO}/actions/workflows/leaderboard.yml)"
           } >> "$GITHUB_STEP_SUMMARY"

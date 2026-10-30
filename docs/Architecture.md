@@ -49,7 +49,8 @@ Trois acteurs, deux repos, zéro serveur :
   - *conformité* : slug → `teams/<slug>.yml`, empreinte d'entrée == empreinte enregistrée, fichier d'appel == bloc extrait (hash SHA-256, byte pour byte) ;
   - *Sonar* : scan complet (exclusions imposées par nous), Quality Gate **bloquant** ;
   - *Trivy* : vulnérabilités HIGH/CRITICAL des dépendances (artefact `trivy-report`) ;
-  - *Heijunka* : export de l'historique de commits (artefact `heijunka-history`).
+  - *Heijunka* : export de l'historique de commits (artefact `heijunka-history`) ;
+  - *rapport* : métriques de cette exécution et dernier score officiel publié dans `data/leaderboard.json`, sélectionné par dépôt, avec rang, éligibilité, détail et horodatage. Le score peut ne pas encore inclure l'exécution courante ; s'il est absent ou inaccessible, le résumé le signale sans faire échouer le workflow.
 5. **Toutes les 15 min** — `leaderboard.yml` : le batch évalue toutes les équipes de `teams/`, archivage d'un snapshot complet par équipe (`scores-history.json`), commit des données, build + déploiement Pages.
 6. **En continu** — la SPA affiche le classement live ; au clic sur une équipe : progression détaillée de chaque composante du score.
 
@@ -86,6 +87,7 @@ Trois acteurs, deux repos, zéro serveur :
 9. **Quality Gate bloquant** : `scanMetadataReportFile: .scannerwork/report-task.txt` (scanner manuel) + `SONAR_TOKEN` en env du step de gate.
 10. **Anti-boucle** : `leaderboard.yml` n'écoute que `schedule`/`workflow_dispatch` ; les commits du bot portent `[skip ci]`.
 11. **Rate limits à 6000 équipes** : PAT GitHub = 5000 req/h ; backoff sur 403 dans `scoring.py`. À re-tester en charge. Vérifier aussi le quota d'analyses SonarCloud gratuit.
+  Les métriques entre jobs transitent par `$GITHUB_OUTPUT`, les sorties du job et `needs.<job>.outputs` : `$GITHUB_ENV` reste local à un job. Le rapport affiche le nombre total de commits du dépôt ; le batch applique le seuil d'éligibilité aux commits de la fenêtre du défi.
 12. **`fetch_dependency_vulns` (scoring.py)** : en stub v1 — à brancher sur l'artefact `trivy-report` du dernier run (5 pts supply chain).
 13. **Un repo, un owner, un import SonarCloud, une clé déclarée** : la clé d'org SonarCloud d'une équipe **ne peut pas être dérivée du login GitHub** — SonarCloud la base sur le display name à l'import (constaté en test : login `Haingue` → org `FabienH`). Elle est donc déclarée dans l'issue d'inscription, stockée dans `teams/<slug>.yml` (métadonnée `sonar-org`), passée en entrée du workflow d'appel et **verrouillée en CI** comme l'empreinte. Le batch la lit du fichier d'équipe. L'import SonarCloud doit être fait par le **propriétaire du repo** (ou un admin si l'équipe est sous une org GitHub) ; les autres membres sont de simples collaborateurs.
 
