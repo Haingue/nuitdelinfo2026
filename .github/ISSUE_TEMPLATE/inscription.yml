@@ -1,17 +1,33 @@
 name: 🏭 Inscription au TPS Challenge
-labels: [inscription]
+description: Inscrivez votre équipe pour participer au défi Toyota
+labels: ['inscription']
+title: 'Inscription — [nom de votre équipe]'
 body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bienvenue au TPS Challenge ! 🏭
+        Avant de vous inscrire, vérifiez que votre repository est **public**.
+        Après validation, notre bot vous répondra avec votre fichier d'appel personnalisé.
   - type: input
     id: team-name
     attributes:
       label: Nom de votre équipe
-      placeholder: "Les Kaizen Warriors"
+      description: Un nom unique — c'est lui qui apparaîtra sur le leaderboard
+      placeholder: 'Les Kaizen Warriors'
     validations:
       required: true
   - type: input
     id: repo-url
     attributes:
       label: URL de votre repository GitHub public
-      description: Exemple : https://github.com/mon-equipe/mon-projet
+      placeholder: 'https://github.com/mon-equipe/mon-projet'
     validations:
       required: true
+  - type: checkboxes
+    id: reglement
+    attributes:
+      label: Engagement
+      options:
+        - label: Notre repo est public et nous acceptons le règlement du défi
+          required: true
