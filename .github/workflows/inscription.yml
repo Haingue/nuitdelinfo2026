@@ -119,7 +119,7 @@ jobs:
           repo: "${{ steps.form.outputs.repo-full }}"
           identity-hash: "$IDENTITY_HASH"
 
-          # ↓↓ Fichier d'appel à copier TEL QUEL dans votre repo ↓↓
+          # === FICHIER D'APPEL À COPIER TEL QUEL DANS VOTRE REPO === #
           name: "TPS Challenge — Appel de l'usine qualité"
           on:
             push:
@@ -135,7 +135,7 @@ jobs:
                 team-name: "${{ steps.form.outputs.team-name }}"
                 identity-hash: "$IDENTITY_HASH"
               secrets: inherit
-          # ↑↑ NE PAS MODIFIER — vérifié par hash à chaque exécution ↑↑
+          # === FIN DU FICHIER === #
           YML
 
       # ---------------------------------------------------------
