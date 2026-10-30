@@ -23,11 +23,13 @@ Variables d'environnement :
 import argparse
 import glob
 import hashlib
+import io
 import json
 import math
 import os
 import sys
 import time
+import zipfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
@@ -280,16 +282,56 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
 
     return s, {"measures": measures, "commits": len(commits),
                "recoveries": recoveries, "identity": ident,
+               "supply_chain": {"critical": crit, "high": high},
                "scans": len(history)}
 
 
 def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
-    """Lit le rapport Trivy du dernier run du workflow d'appel.
+    """Lit Trivy sur le dernier run termine de main, meme si Sonar echoue.
 
-    v1 : si aucun artefact exploitable, retourne (-1,-1) -> pas de points.
-    À brancher sur l'API artifacts/du run (actions/runs -> artifacts).
+    Un rapport absent, invalide ou aux versions non resolues vaut (-1, -1).
     """
-    return (-1, -1)
+    try:
+        runs = [run for run in fetch_workflow_runs(team, token)
+                if run.get("head_branch") == "main"]
+        if not runs:
+            return (-1, -1)
+        latest = max(runs, key=lambda run: run["created_at"])
+        response = gh_get(
+            f"{GITHUB_API}/repos/{team.repo_full}/actions/runs/{latest['id']}/artifacts",
+            token, per_page=100,
+        )
+        response.raise_for_status()
+        artifact = next((entry for entry in response.json().get("artifacts", [])
+                         if entry.get("name") == "trivy-report"
+                         and not entry.get("expired", False)), None)
+        if artifact is None:
+            return (-1, -1)
+        response = gh_get(
+            f"{GITHUB_API}/repos/{team.repo_full}/actions/artifacts/{artifact['id']}/zip",
+            token,
+        )
+        response.raise_for_status()
+        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+            report = json.loads(archive.read("trivy-report.json"))
+        results = report["Results"]
+        if not isinstance(results, list):
+            return (-1, -1)
+        critical, high = 0, 0
+        for result in results:
+            if result.get("Class") == "lang-pkgs" and any(
+                not package.get("Version")
+                for package in result.get("Packages", [])
+            ):
+                return (-1, -1)
+            for vulnerability in result.get("Vulnerabilities", []):
+                critical += vulnerability.get("Severity") == "CRITICAL"
+                high += vulnerability.get("Severity") == "HIGH"
+        return critical, high
+    except (requests.RequestException, zipfile.BadZipFile, KeyError,
+            ValueError, TypeError, AttributeError) as error:
+        print(f"[warn] Trivy {team.repo_full}: {error}", file=sys.stderr)
+        return (-1, -1)
 
 
 # ----------------------------------------------------------------------

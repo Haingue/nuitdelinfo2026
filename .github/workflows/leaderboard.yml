@@ -34,13 +34,12 @@ jobs:
         run: pip install -r scoring/requirements.txt # requests
 
       - name: Exécuter le calculateur
-        working-directory: scoring
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }} # PAT lecture publique (rate limit + élevé)
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token SonarCloud lecture
           IDENTITY_SALT: ${{ secrets.IDENTITY_SALT }} # sel de l'empreinte d'identité
           WINDOW_START: ${{ vars.WINDOW_START }} # ouverture de la nuit (variable repo)
-        run: python scoring.py --org votre-org --repo tpsc-challenge
+        run: python scoring/scoring.py --org Haingue --repo nuitdelinfo2026
 
       - name: Committer les données leaderboard
         run: |
