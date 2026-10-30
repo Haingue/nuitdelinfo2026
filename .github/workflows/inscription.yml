@@ -124,6 +124,9 @@ jobs:
             push:
               branches: [main]
             workflow_dispatch:
+          permissions:
+            contents: read
+            issues: read
           jobs:
             tps-challenge:
               uses: $QUALITY_WORKFLOW_REF
