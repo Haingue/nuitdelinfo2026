@@ -8,6 +8,9 @@ permissions:
   contents: write # commit de teams/<team>.yml
   issues: write # labels + commentaires
 
+env:
+  QUALITY_WORKFLOW_REF: v1
+
 concurrency:
   group: inscription-${{ github.event.issue.number }}
   cancel-in-progress: false
@@ -124,7 +127,7 @@ jobs:
             workflow_dispatch:
           jobs:
             tps-challenge:
-              uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1
+              uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@$QUALITY_WORKFLOW_REF
               with:
                 team-name: "${{ steps.form.outputs.team-name }}"
                 identity-hash: "$IDENTITY_HASH"
