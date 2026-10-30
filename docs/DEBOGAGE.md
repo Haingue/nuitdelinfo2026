@@ -50,6 +50,11 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 - **Cause** : le secret `SONAR_TOKEN` est absent, expiré, ou n'a pas les droits sur le projet.
 - **À faire** : sur sonarcloud.io → *Mon compte → Sécurité* → générez un token (*Analyze projects*) → dans votre repo GitHub : Settings → Secrets and variables → Actions → New repository secret → nom **`SONAR_TOKEN`** (exactement, en majuscules). Relancez.
 
+### ❌ `You are running CI analysis while Automatic Analysis is enabled`
+
+- **Cause** : à l'import de votre repo, SonarCloud active par défaut son propre scan automatique (« Automatic Analysis »). Il entre en conflit avec le scan lancé par le workflow Toyota.
+- **À faire** : sur sonarcloud.io → votre projet → **Administration → Analysis Method** → **désactivez « Automatic Analysis »** → relancez la run. Le workflow Toyota devient l'unique méthode d'analyse.
+
 ### ❌ `You're not authorized to access this organization` / `project not found` au scan
 
 - **Cause** : la clé d'organisation SonarCloud enregistrée à votre inscription est incorrecte. Rappel : la clé d'org SonarCloud **n'est pas forcément votre login GitHub** (SonarCloud peut utiliser le display name — ex. login `Haingue` → org `FabienH`), et c'est le **propriétaire du repo** qui fait l'import.
@@ -64,12 +69,20 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 
 ---
 
-## 3. Le workflow ne démarre pas du tout
+## 3. Job « Supply chain — audit dépendances » (Trivy)
+
+### ❌ `remote Maven repository returned 429 Too Many Requests ... Retry-After: 1800`
+
+**Cause** : Trivy tente de résoudre l'arbre transitif de vos dépendances en interrogeant Maven Central. Les runners GitHub Actions partagent des IPs, très largement rate-limitées — surtout pendant la Nuit de l'Info. Ce n'est **pas un problème dans votre repo**.
+
+**Correction** : rien à faire — le workflow Toyota scanne en mode *offline* (`--offline-scan`), qui interdit tout appel réseau vers les registres distants. Si vous voyez encore cette erreur, vérifiez que votre fichier d'appel est bien à jour (régénérez-le depuis l'issue d'entraide si besoin). Trivy analyse quand même vos `pom.xml`, `package-lock.json`, `requirements.txt` locaux : seules les dépendances transitives non déclarées dans ces fichiers peuvent être manquées.
+
+## 4. Le workflow ne démarre pas du tout
 
 - **Vérifiez** : votre fichier d'appel est bien dans **`.github/workflows/`** (orthographe exacte du dossier), l'événement déclencheur est `push` sur la branche `main` (branche par défaut = `main` ? sinon, changez la branche dans Settings ou adaptez), et le fichier a l'extension `.yml`.
 - **YAML invalide** ? GitHub affiche un badge orange « Invalid workflow file » sur la run : une indentation est fausse. Recollez le bloc proprement (voir § 1).
 
-## 4. Votre équipe n'apparaît pas sur le leaderboard
+## 5. Votre équipe n'apparaît pas sur le leaderboard
 
 1. Êtes-vous labellisés `inscrit ✅` dans votre issue d'inscription ?
 2. Avez-vous au moins une run verte/rouge du workflow ? (Le leaderboard ne liste que les équipes scannées.)

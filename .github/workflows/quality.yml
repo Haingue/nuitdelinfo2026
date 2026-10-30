@@ -207,6 +207,7 @@ jobs:
           format: json
           output: trivy-report.json
           exit-code: '0' # on ne bloque pas : le score en tiendra compte
+          offline-scan: true # interdit à Trivy d'interroger Maven Central / registres distants (429 garantis à l'échelle de 6000 équipes sur des IPs de runners partagées) ; les dépendances locales (pom.xml, lockfiles) restent scannées
 
       - name: Extraire les métriques supply chain
         run: |
