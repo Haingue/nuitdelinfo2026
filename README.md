@@ -86,11 +86,13 @@ Votre projet est évalué uniquement si **toutes** ces conditions sont respecté
 Votre workflow d'appel lance un scan SonarCloud à chaque push. Celui-ci s'authentifie avec **votre** token :
 
 1. Créez un compte sur [sonarcloud.io](https://sonarcloud.io) avec votre compte GitHub.
-2. Créez une **organisation SonarCloud dédiée à votre équipe** et liez-la à votre repository GitHub public.
-3. Générez un token : _Mon compte → Sécurité → Generate token_ (droits : _Analyze projects_).
-4. Ajoutez-le comme secret dans votre repo GitHub : _Settings → Secrets and variables → Actions → New repository secret_, nommé **`SONAR_TOKEN`**. Ne le partagez jamais, ne le committez jamais.
+2. ⚠️ **Une seule personne par équipe fait ceci : le PROPRIÉTAIRE du repository** (celui ou celle qui l'a créé). Dans SonarCloud, choisissez **« Import repository from GitHub »** et sélectionnez votre repo : cela crée votre organisation SonarCloud dont la clé = votre login GitHub. **Ne créez pas une organisation manuellement avec un nom personnalisé** — le workflow Toyota déduit automatiquement votre organisation à partir du propriétaire du repo ; un autre nom casserait le scan.
+3. Générez un token : *Mon compte → Sécurité → Generate token* (droits : *Analyze projects*).
+4. Ajoutez-le comme secret dans votre repo GitHub : *Settings → Secrets and variables → Actions → New repository secret*, nommé **`SONAR_TOKEN`**. Ne le partagez jamais, ne le committez jamais.
 
-> 💡 Vous n'avez **rien d'autre à configurer** : la clé de projet, l'organisation de référence et les exclusions de scan sont imposées par le workflow Toyota. Votre token ne sert qu'à authentifier le scan de **votre** repository.
+> 💡 Vous n'avez **rien d'autre à configurer** : la clé de projet, l'organisation SonarCloud et les exclusions de scan sont déduites automatiquement par le workflow Toyota. Votre token ne sert qu'à authentifier le scan de **votre** repository.
+>
+> 👥 **Travail en équipe** : les autres membres ne créent ni repo ni organisation SonarCloud — ils sont ajoutés en **collaborateurs** du repo GitHub (*Settings → Collaborators*) et poussent normalement. Le scoring analyse le repo et les commits de **toute** l'équipe.
 
 ---
 

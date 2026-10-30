@@ -154,7 +154,10 @@ jobs:
             -Dsonar.python.version=3.11
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token de l'équipe (cf. procédure de l'énoncé)
-          SONAR_ORG: votre-org-sonarcloud # organisation SonarCloud du challenge — REMPLACER
+          # Organisation SonarCloud de l'ÉQUIPE, dérivée du owner GitHub du repo appelant.
+          # Convention : l'équipe crée son org SonarCloud EN IMPORTANT son repo GitHub
+          # -> clé de l'org = login GitHub du owner. Zéro configuration côté équipe.
+          SONAR_ORG: ${{ github.repository_owner }}
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Vérifier le Quality Gate (bloquant = Jidoka)

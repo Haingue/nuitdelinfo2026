@@ -2,7 +2,7 @@
 """
 TPS Challenge — Calculateur de score (batch).
 
-S'exécute via GitHub Actions (schedule 15 min) dans Haingue/nuitdelinfo2026.
+S'exécute via GitHub Actions (schedule 15 min) dans votre-org/tpsc-challenge.
 Pour chaque équipe inscrite (issues du repo), interroge les APIs SonarCloud
 et GitHub, applique le barème officiel et produit data/leaderboard.json.
 
@@ -75,6 +75,11 @@ class Team:
         owner, name = self.repo_full.split("/")
         return f"{owner}_{name}"
 
+    @property
+    def sonar_org(self) -> str:
+        # même convention que quality.yml : org SonarCloud = login GitHub owner
+        return self.repo_full.split("/")[0]
+
 
 def load_teams(teams_dir: str = "teams") -> list[Team]:
     """Lit les fichiers d'équipe générés par le workflow d'inscription.
@@ -83,6 +88,8 @@ def load_teams(teams_dir: str = "teams") -> list[Team]:
     (team-name, repo, identity-hash). L'issue d'inscription n'est qu'un
     point d'entrée, le batch n'en dépend plus.
     """
+    import glob
+
     teams = []
     for path in glob.glob(f"{teams_dir}/*.yml"):
         with open(path, encoding="utf-8") as f:
@@ -120,13 +127,15 @@ def check_identity(team: Team, token: str, salt: str) -> dict:
 # ----------------------------------------------------------------------
 def fetch_gate_current(team: Team, token: str) -> bool:
     r = sonar_get("/quality_gates/project_status", token,
-                  project=team.project_key, branch="main")
+                  project=team.project_key, organization=team.sonar_org,
+                  branch="main")
     return r.json().get("projectStatus", {}).get("status") == "OK"
 
 
 def fetch_quality_measures(team: Team, token: str) -> dict:
     r = sonar_get("/measures/component", token,
-                  component=team.project_key, branch="main",
+                  component=team.project_key, organization=team.sonar_org,
+                  branch="main",
                   metricKeys="reliability_rating,security_rating,sqale_rating,"
                              "coverage,duplicated_lines_density")
     if r.status_code != 200:

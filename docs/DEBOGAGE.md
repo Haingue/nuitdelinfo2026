@@ -11,17 +11,14 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 ## 1. Job « Jidoka — Contrôle de conformité »
 
 ### ❌ `Aucun fichier d'inscription trouvé pour l'équipe 'X' (teams/….yml)`
-
 - **Cause** : votre équipe n'est pas (encore) inscrite, ou le nom d'équipe de votre fichier d'appel ne correspond pas exactement à celui de l'issue d'inscription.
 - **À faire** : vérifiez dans l'issue d'inscription que vous avez reçu le commentaire « ✅ Inscription validée ». Si ce n'est pas le cas, le bot a refusé votre inscription (lisez son commentaire : repo privé, nom déjà pris…). Le `team-name` dans votre fichier d'appel doit être **identique caractère pour caractère** à celui de l'issue.
 
 ### ❌ `Empreinte d'identité invalide pour cette équipe`
-
 - **Cause** : le `identity-hash` de votre fichier d'appel ne correspond pas à celui qui vous a été attribué. Vous avez probablement copié le bloc d'une **autre équipe**, ou modifié la valeur.
 - **À faire** : récupérez votre propre bloc dans le commentaire du bot de **votre** issue d'inscription et recollez-le tel quel.
 
 ### ❌ `Fichier d'appel non conforme au fichier généré lors de votre inscription`
-
 - **Cause (la plus fréquente du défi)** : votre fichier d'appel diffère du bloc généré par le bot, **même d'un seul caractère**. Bonne nouvelle : les fins de ligne Windows (CRLF) et les espaces en fin de ligne sont **automatiquement ignorés** par le contrôle. Coupables restants :
   - un éditeur a converti les apostrophes `'` en `'` (apostrophe typographique) ou modifié les tirets/accents ;
   - une ligne supprimée/ajoutée/indentée, un caractère modifié ;
@@ -38,7 +35,6 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
   et comparez avec le hash du bloc d'appel — seul le bot fournit la référence ; en cas de doute, rouvrez une issue d'entraide.
 
 ### ❌ `Le repository doit être public`
-
 - **À faire** : Settings → General → tout en bas, *Danger Zone* → *Change visibility* → Public. Relancez ensuite le workflow (onglet Actions → sélectionnez la run → *Re-run all jobs*).
 
 ---
@@ -46,17 +42,18 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 ## 2. Job « Scan qualité SonarCloud »
 
 ### ❌ Échec du step « Scanner le projet » avec `Authentication failed` / `401`
-
 - **Cause** : le secret `SONAR_TOKEN` est absent, expiré, ou n'a pas les droits sur le projet.
 - **À faire** : sur sonarcloud.io → *Mon compte → Sécurité* → générez un token (*Analyze projects*) → dans votre repo GitHub : Settings → Secrets and variables → Actions → New repository secret → nom **`SONAR_TOKEN`** (exactement, en majuscules). Relancez.
 
 ### ❌ `You're not authorized to access this organization` / erreur de droits sur le projet
-
 - **Cause** : le projet Sonar n'est pas rattaché à la bonne organisation, ou le token n'a pas été créé avec le bon compte.
-- **À faire** : le workflow impose l'organisation du challenge. Recréez votre token depuis le compte lié à votre repo GitHub et relancez. Si l'erreur persiste, ouvrez une issue d'entraide — le paramétrage côté organisateur est peut-être en cause.
+- **À faire** : le workflow Toyota déduit automatiquement votre organisation SonarCloud = **le login GitHub du propriétaire du repo**. Pour que ce soit cohérent :
+  1. c'est **le propriétaire du repo** (celui qui l'a créé) qui importe le repo dans SonarCloud — pas un autre membre de l'équipe ;
+  2. importez via **« Import repository from GitHub »** (ne créez pas une organisation manuellement avec un nom personnalisé) ;
+  3. générez le token depuis ce même compte.
+- **Symptôme typique** : erreur `project not found` au scan alors que votre token est correct → l'import SonarCloud a été fait par le mauvais membre de l'équipe ou avec une clé d'organisation personnalisée. Si l'erreur persiste, ouvrez une issue d'entraide.
 
 ### ❌ Échec du step « Vérifier le Quality Gate »
-
 - **Ce n'est PAS une erreur de configuration** : c'est le fonctionnement voulu (*Jidoka* — la ligne s'arrête quand il y a un défaut). Le Quality Gate Sonar est rouge tant que qualité, couverture ou sécurité ne passent pas les seuils.
 - **À faire** : ouvrez votre projet sur sonarcloud.io → consultez quelles **conditions du gate** échouent (bugs, coverage, duplications…) → corrigez, pushez : le gate repasse vert et la run redevient verte.
 - ⚠️ Rappel : un gate rouge à la fin de la nuit = **−10 points** et inéligibilité. Corrigez vite !
@@ -80,7 +77,6 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 ## 🏥 Demander de l'aide
 
 Ouvrez une issue sur le repo du défi avec :
-
 - le **lien de votre run** GitHub Actions (onglet Actions → votre run → copiez l'URL) ;
 - le **nom exact de l'étape** qui échoue ;
 - les 20 premières lignes du log de l'étape fautive.
