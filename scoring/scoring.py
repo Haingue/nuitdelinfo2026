@@ -74,33 +74,22 @@ class Team:
         return f"{owner}_{name}"
 
 
-def load_teams(org: str, repo: str, token: str) -> list[Team]:
-    """Scrape les issues d'inscription (label 'inscription', template JSON)."""
-    teams = []
-    page = 1
-    while True:
-        r = gh_get(f"{GITHUB_API}/repos/{org}/{repo}/issues", token,
-                   state="open", labels="inscription", per_page=100, page=page)
-        if r.status_code != 200:
-            break
-        issues = r.json()
-        if not issues:
-            break
-        for it in issues:
-            body = it.get("body") or ""
-            try:
-                data = json.loads(body.split("```json")[1].split("```")[0])
-                teams.append(Team(data["team-name"],
-                                  data["repo-url"]
-                                      .replace("https://github.com/", "")
-                                      .strip("/"),
-                                  it["number"]))
-            except (KeyError, IndexError, json.JSONDecodeError):
-                print(f"[warn] Issue #{it['number']} mal formée, ignorée",
-                      file=sys.stderr)
-        page += 1
-    return teams
+def load_teams(teams_dir: str = "teams") -> list[Team]:
+    """Lit les fichiers d'équipe générés par le workflow d'inscription.
 
+    Une seule source de vérité, versionée dans Git : teams/<team>.yml
+    (team-name, repo, identity-hash). L'issue d'inscription n'est qu'un
+    point d'entrée, le batch n'en dépend plus.
+    """
+    teams = []
+    for path in glob.glob(f"{teams_dir}/*.yml"):
+        with open(path, encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        if not data or "team-name" not in data:
+            print(f"[warn] {path} invalide, ignoré", file=sys.stderr)
+            continue
+        teams.append(Team(data["team-name"], data["repo"], issue_number=0))
+    return teams
 
 # ----------------------------------------------------------------------
 # Identité : SHA-256(repository_id + team-name + SEL)
@@ -323,7 +312,7 @@ def main() -> None:
     except FileNotFoundError:
         pass
 
-    teams = load_teams(args.org, args.repo, cfg.gh_token)
+    teams = teams = load_teams("teams")
     leaderboard = []
     for team in teams:
         try:
