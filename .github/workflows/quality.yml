@@ -11,7 +11,11 @@ on:
         description: "Empreinte d'identité fournie par Toyota à l'inscription"
         required: true
         type: string
-      # AUCUNE autre entrée : pas d'exclusions, pas de seuils, pas de chemins paramétrables.
+      sonar-org:
+        description: "Clé de l'organisation SonarCloud de l'équipe (déclarée à l'inscription)"
+        required: true
+        type: string
+      # AUCUNE entrée technique : pas d'exclusions, pas de seuils, pas de chemins paramétrables.
 
 permissions:
   contents: read
@@ -49,7 +53,7 @@ jobs:
             exit 1
           fi
 
-      - name: Vérifier l'empreinte d'identité (binding équipe <-> repo)
+      - name: Vérifier l'empreinte d'identité et l'organisation SonarCloud
         run: |
           EXPECTED=$(sed -n 's/^identity-hash: *"\(.*\)"$/\1/p' /tmp/equipe.yml)
           if [ -z "$EXPECTED" ]; then
@@ -60,7 +64,20 @@ jobs:
             echo "::error::Empreinte d'identité invalide pour cette équipe."
             exit 1
           fi
-          echo "::notice::Empreinte d'identité conforme ✔"
+          # La clé d'org SonarCloud ne peut PAS être dérivée du login GitHub
+          # (SonarCloud la base sur le display name à l'import) : elle est
+          # déclarée à l'inscription et verrouillée ici comme l'empreinte.
+          EXPECTED_ORG=$(sed -n 's/^sonar-org: *"\(.*\)"$/\1/p' /tmp/equipe.yml)
+          if [ -z "$EXPECTED_ORG" ]; then
+            echo "::error::Fichier d'équipe invalide (organisation SonarCloud absente)."
+            exit 1
+          fi
+          if [ "${{ inputs.sonar-org }}" != "$EXPECTED_ORG" ]; then
+            echo "::error::Clé d'organisation SonarCloud invalide pour cette équipe."
+            exit 1
+          fi
+          echo "SONAR_ORG=$EXPECTED_ORG" >> "$GITHUB_ENV"
+          echo "::notice::Empreinte d'identité + organisation SonarCloud conformes ✔"
           # NB : la validité cryptographique de l'empreinte
           # (SHA-256 de repository_id + team-name + SEL secret) est re-vérifiée
           # côté batch Toyota, où le sel est conservé.
