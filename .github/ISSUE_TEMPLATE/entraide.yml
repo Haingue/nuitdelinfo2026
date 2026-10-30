@@ -1,0 +1,65 @@
+name: 🛠️ Demande d'entraide
+description: Une run rouge ou un problème bloquant ? Décrivez-le précisément
+labels: ["entraide"]
+title: "Entraide — [votre problème en 5 mots]"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Avant d'ouvrir cette issue 🔍
+
+        1. Consultez d'abord le **[guide de dépannage](https://github.com/Haingue/nuitdelinfo2026/blob/main/docs/DEBOGAGE.md)** : il résout 95 % des erreurs courantes.
+        2. **Ne collez jamais votre `SONAR_TOKEN`** ni aucun secret : si un secret est visible dans vos logs, révoquez-le immédiatement sur SonarCloud.
+
+        Plus votre description est précise, plus vite nous pourrons vous débloquer.
+  - type: input
+    id: team-name
+    attributes:
+      label: Nom de votre équipe
+      description: Le même que celui de votre issue d'inscription
+      placeholder: "Les Kaizen Warriors"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Quelle étape échoue ?
+      options:
+        - Le workflow ne démarre pas du tout
+        - Jidoka — Contrôle de conformité
+        - Scan qualité SonarCloud
+        - Supply chain — audit dépendances
+        - Heijunka — régularité
+        - Mon équipe n'apparaît pas sur le leaderboard
+        - Autre / je ne sais pas
+    validations:
+      required: true
+  - type: input
+    id: run-url
+    attributes:
+      label: Lien de votre run GitHub Actions (si le workflow démarre)
+      description: "Dans votre repo : onglet Actions → la run concernée → copiez l'URL"
+      placeholder: "https://github.com/mon-equipe/mon-projet/actions/runs/1234567890"
+  - type: textarea
+    id: error-message
+    attributes:
+      label: Message d'erreur exact
+      description: Copiez-collez le message d'erreur (les lignes rouges du log de l'étape fautive)
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Qu'avez-vous déjà tenté ?
+      description: Ce que vous avez essayé depuis le guide de dépannage — évite qu'on vous redemande
+      placeholder: "J'ai recréé le fichier via l'interface web GitHub, vérifié mon SONAR_TOKEN…"
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Vérifications préalables
+      options:
+        - label: J'ai lu le guide de dépannage et appliqué les remèdes de ma situation
+          required: true
+        - label: Aucun secret (SONAR_TOKEN ou autre) n'apparaît dans ce que je colle
+          required: true
