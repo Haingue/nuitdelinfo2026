@@ -86,10 +86,28 @@ jobs:
             echo "-----------------------------------------------------------"
             exit 1
           fi
-          ATTENDU_SHA=$(sha256sum /tmp/attendu.yml | cut -d' ' -f1)
-          CALLER_SHA=$(sha256sum /tmp/caller.yml | cut -d' ' -f1)
+          # NORMALISATION ANTI CRLF/LF : les éditeurs Windows produisent du
+          # CRLF et des espaces de fin de ligne. On neutralise les deux
+          # fichiers AVANT de hasher pour que seuls les caractères
+          # SIGNIFICATIFS comptent :
+          #   - suppression des \r (CRLF -> LF)
+          #   - suppression des espaces/tabs de fin de ligne
+          #   - suppression des lignes vides finales
+          #   - un unique retour à la ligne final
+          normalize() {
+            awk '{ sub(/\r$/, ""); sub(/[ \t]+$/, ""); buf[NR] = $0 }
+                 END { last = NR; while (last > 0 && buf[last] == "") last--;
+                       for (i = 1; i <= last; i++) print buf[i] }'
+          }
+          normalize < /tmp/attendu.yml > /tmp/attendu-norm.yml
+          normalize < /tmp/caller.yml    > /tmp/caller-norm.yml
+          ATTENDU_SHA=$(sha256sum /tmp/attendu-norm.yml | cut -d' ' -f1)
+          CALLER_SHA=$(sha256sum /tmp/caller-norm.yml | cut -d' ' -f1)
           if [ "$CALLER_SHA" != "$ATTENDU_SHA" ]; then
             echo "::error::Fichier d'appel non conforme au fichier généré lors de votre inscription. Restaurez-le sans le modifier."
+            echo "--- Diagnostic : premières divergences (attendu vs copié) ---"
+            diff /tmp/attendu-norm.yml /tmp/caller-norm.yml | head -20 || true
+            echo "-----------------------------------------------------------"
             exit 1
           fi
           echo "::notice::Fichier d'appel conforme ✔"

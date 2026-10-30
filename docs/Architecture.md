@@ -29,14 +29,16 @@ Trois acteurs, deux repos, zéro serveur :
 
 ## 2. Les composants
 
-| Composant | Fichier | Rôle |
-|---|---|---|
-| Formulaire d'inscription | `.github/ISSUE_TEMPLATE/inscription.yml` | Point d'entrée unique des équipes (issue labellisée `inscription`) |
-| Bot d'inscription | `.github/workflows/inscription.yml` | Valide (repo public, unicité), calcule l'empreinte, génère `teams/<slug>.yml`, commite, répond dans l'issue |
-| Usine qualité | `.github/workflows/quality.yml` | Workflow réutilisable : conformité (hash + empreinte), scan Sonar, Trivy, Heijunka, rapport |
-| Calculateur | `scoring/scoring.py` | Batch Python : lit `teams/*.yml`, interroge APIs SonarCloud + GitHub, applique le barème, produit `data/leaderboard.json` + `data/scores-history.json` |
-| Batch + déploiement | `.github/workflows/leaderboard.yml` | Cron 15 min : exécute le calculateur, commit les données, build la SPA, déploie GitHub Pages |
-| Leaderboard | `leaderboard/` | SPA React + Vite + Tailwind : podium, liste, sparklines, détail par équipe (progression multi-courbes) |
+
+| Composant                | Fichier                                  | Rôle                                                                                                                                                   |
+| ------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Formulaire d'inscription | `.github/ISSUE_TEMPLATE/inscription.yml` | Point d'entrée unique des équipes (issue labellisée `inscription`)                                                                                     |
+| Bot d'inscription        | `.github/workflows/inscription.yml`      | Valide (repo public, unicité), calcule l'empreinte, génère `teams/<slug>.yml`, commite, répond dans l'issue                                            |
+| Usine qualité            | `.github/workflows/quality.yml`          | Workflow réutilisable : conformité (hash + empreinte), scan Sonar, Trivy, Heijunka, rapport                                                            |
+| Calculateur              | `scoring/scoring.py`                     | Batch Python : lit `teams/*.yml`, interroge APIs SonarCloud + GitHub, applique le barème, produit `data/leaderboard.json` + `data/scores-history.json` |
+| Batch + déploiement      | `.github/workflows/leaderboard.yml`      | Cron 15 min : exécute le calculateur, commit les données, build la SPA, déploie GitHub Pages                                                           |
+| Leaderboard              | `leaderboard/`                           | SPA React + Vite + Tailwind : podium, liste, sparklines, détail par équipe (progression multi-courbes)                                                 |
+
 
 ## 3. Le process complet (cycle de vie d'une équipe)
 
@@ -44,10 +46,10 @@ Trois acteurs, deux repos, zéro serveur :
 2. **Bot** — vérifie le repo (public, existant, non déjà inscrit), récupère son `repository_id`, calcule l'empreinte `SHA-256(repository_id + team-name + IDENTITY_SALT)`, génère `teams/<slug>.yml` (métadonnées + bloc d'appel délimité), committe, et répond dans l'issue avec le bloc d'appel à copier **tel quel**.
 3. **Setup équipe** — copie le bloc dans `.github/workflows/appeler-tps-challenge.yml`, crée son compte SonarCloud, ajoute le secret `SONAR_TOKEN`.
 4. **À chaque push sur `main`** — `quality.yml` s'exécute dans le contexte du repo équipe :
-   - *conformité* : slug → `teams/<slug>.yml`, empreinte d'entrée == empreinte enregistrée, fichier d'appel == bloc extrait (hash SHA-256, byte pour byte) ;
-   - *Sonar* : scan complet (exclusions imposées par nous), Quality Gate **bloquant** ;
-   - *Trivy* : vulnérabilités HIGH/CRITICAL des dépendances (artefact `trivy-report`) ;
-   - *Heijunka* : export de l'historique de commits (artefact `heijunka-history`).
+  - *conformité* : slug → `teams/<slug>.yml`, empreinte d'entrée == empreinte enregistrée, fichier d'appel == bloc extrait (hash SHA-256, byte pour byte) ;
+  - *Sonar* : scan complet (exclusions imposées par nous), Quality Gate **bloquant** ;
+  - *Trivy* : vulnérabilités HIGH/CRITICAL des dépendances (artefact `trivy-report`) ;
+  - *Heijunka* : export de l'historique de commits (artefact `heijunka-history`).
 5. **Toutes les 15 min** — `leaderboard.yml` : le batch évalue toutes les équipes de `teams/`, archivage d'un snapshot complet par équipe (`scores-history.json`), commit des données, build + déploiement Pages.
 6. **En continu** — la SPA affiche le classement live ; au clic sur une équipe : progression détaillée de chaque composante du score.
 
@@ -55,23 +57,25 @@ Trois acteurs, deux repos, zéro serveur :
 
 **Qualité finale 60** (gate 20, maintenabilité 15, sécurité 10, couverture 10, supply chain 5) · **Kaizen 40** (pente 20, résilience 10, heijunka 10) · **Bonus/malus** (jamais rouge +5, régression corrigée +3, régression finale −5, gate rouge final −10). Éligibilité : ≥ 20 commits, gate vert final, repo public. La **pente** se calcule sur la trajectoire archivée par le batch (première vs dernière mesure qualité), pas sur un instantané Sonar.
 
-## 5. Sécurité & anti-triche — le modèle de menaces
+## 5. Sécurité &amp; anti-triche — le modèle de menaces
 
-| Menace | Parade | Où |
-|---|---|---|
-| Modifier le workflow qualité | Workflow réutilisable : la logique vit dans notre repo, tag `v0` contrôlé par nous | architecture |
-| Modifier le fichier d'appel | Hash SHA-256 du bloc vs `teams/<slug>.yml`, à chaque push | quality.yml/conformité |
-| Usurper une autre équipe | Empreinte = SHA-256(repo_id + team + **sel secret**) ; vérifiée en CI (valeur enregistrée) **et** en batch (recalcul avec le sel) | inscription + conformité + batch |
-| Exclure des fichiers du scan | `-Dsonar.exclusions` imposé dans notre workflow ; paramètres Sonar re-vérifiés via API | quality.yml/sonar + batch |
-| Envoyer de faux scores | **Pull, jamais push** : les équipes n'envoient rien ; le batch lit les APIs directement | leaderboard.yml |
-| Multi-inscriptions / flood | Unicité nom + repo dans le bot ; un fichier `teams/` par équipe ; `concurrency` sur le batch | inscription.yml |
-| Contestation | Tout est commité et horodaté : inscriptions, fichiers d'équipe, chaque leaderboard, snapshots de scores | Git = audit trail |
+
+| Menace                       | Parade                                                                                                                             | Où                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Modifier le workflow qualité | Workflow réutilisable : la logique vit dans notre repo, tag `v0` contrôlé par nous                                                 | architecture                     |
+| Modifier le fichier d'appel  | Hash SHA-256 du bloc vs `teams/<slug>.yml`, à chaque push                                                                          | quality.yml/conformité           |
+| Usurper une autre équipe     | Empreinte = SHA-256(repo\_id + team + **sel secret**) ; vérifiée en CI (valeur enregistrée) **et** en batch (recalcul avec le sel) | inscription + conformité + batch |
+| Exclure des fichiers du scan | `-Dsonar.exclusions` imposé dans notre workflow ; paramètres Sonar re-vérifiés via API                                             | quality.yml/sonar + batch        |
+| Envoyer de faux scores       | **Pull, jamais push** : les équipes n'envoient rien ; le batch lit les APIs directement                                            | leaderboard.yml                  |
+| Multi-inscriptions / flood   | Unicité nom + repo dans le bot ; un fichier `teams/` par équipe ; `concurrency` sur le batch                                       | inscription.yml                  |
+| Contestation                 | Tout est commité et horodaté : inscriptions, fichiers d'équipe, chaque leaderboard, snapshots de scores                            | Git = audit trail                |
+
 
 **Secrets** (repo du défi) : `GH_PAT` (lecture API, attention aux rate limits), `SONAR_TOKEN` (SonarCloud, lecture), `IDENTITY_SALT` (sel de l'empreinte — ne vit **jamais** en CI côté équipes). **Variable** : `WINDOW_START` (ouverture de la nuit). **Labels** à créer : `inscription`, `inscrit ✅`.
 
 ## 6. Subtilités d'implémentation (les pièges rencontrés)
 
-1. **Hash = identité byte pour byte.** Le bloc d'appel copié doit être *exactement* le bloc extrait du fichier d'équipe : marqueurs `# === FICHIER D'APPEL ===` / `# === FIN DU FICHIER ===` **exclus**, fins de ligne LF, apostrophe simple `'` (pas `'` typographique), retour final à la ligne identique. CRLF ou caractère Unicode converti = hash divergent = conformité rouge.
+1. **Hash sur contenu normalisé.** Les deux fichiers sont normalisés avant hachage : `\r` supprimés (CRLF→LF), espaces/tabs de fin de ligne supprimés, lignes vides finales retirées, un unique saut de ligne final. Les équipes Windows ne peuvent donc pas échouer sur les fins de ligne — seul le contenu significatif compte. Restent piégeux : apostrophe typographique `'`, caractères Unicode convertis par l'éditeur, lignes avalées par un copier-coller Markdown.
 2. **Une seule définition du bloc d'appel.** Le bot et le workflow qualité extraient le bloc avec le *même* `awk` borné — sinon le message copié et la référence vérifiée divergent.
 3. **Slug cohérent** : `team-name` → slug (minuscules, non-alnum → tirets) calculé à l'identique dans le bot et dans la conformité CI. `TMMF_TEST` → `tmmf-test`.
 4. **Contexte `workflow_call`** : `github.event.repository` n'est pas fiable ; utiliser `github.repository`. `github.workflow_ref` donne le chemin du fichier appelant.
