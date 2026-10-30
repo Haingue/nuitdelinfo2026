@@ -2,7 +2,7 @@
 """
 TPS Challenge — Calculateur de score (batch).
 
-S'exécute via GitHub Actions (schedule 15 min) dans votre-org/tpsc-challenge.
+S'exécute via GitHub Actions (schedule 15 min) dans Haingue/nuitdelinfo2026.
 Pour chaque équipe inscrite (issues du repo), interroge les APIs SonarCloud
 et GitHub, applique le barème officiel et produit data/leaderboard.json.
 
@@ -21,6 +21,7 @@ Variables d'environnement :
 """
 
 import argparse
+import glob
 import hashlib
 import json
 import math
@@ -32,6 +33,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import requests
+import yaml
 
 GITHUB_API = "https://api.github.com"
 SONAR_API = "https://sonarcloud.io/api"
@@ -81,6 +83,8 @@ def load_teams(teams_dir: str = "teams") -> list[Team]:
     (team-name, repo, identity-hash). L'issue d'inscription n'est qu'un
     point d'entrée, le batch n'en dépend plus.
     """
+    import glob
+
     teams = []
     for path in glob.glob(f"{teams_dir}/*.yml"):
         with open(path, encoding="utf-8") as f:
@@ -90,6 +94,7 @@ def load_teams(teams_dir: str = "teams") -> list[Team]:
             continue
         teams.append(Team(data["team-name"], data["repo"], issue_number=0))
     return teams
+
 
 # ----------------------------------------------------------------------
 # Identité : SHA-256(repository_id + team-name + SEL)
@@ -312,7 +317,7 @@ def main() -> None:
     except FileNotFoundError:
         pass
 
-    teams = teams = load_teams("teams")
+    teams = load_teams("teams")
     leaderboard = []
     for team in teams:
         try:

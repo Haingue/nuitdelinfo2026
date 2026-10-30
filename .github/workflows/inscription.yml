@@ -124,7 +124,7 @@ jobs:
             workflow_dispatch:
           jobs:
             tps-challenge:
-              uses: votre-org/tpsc-challenge/.github/workflows/quality.yml@v1
+              uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1
               with:
                 team-name: "${{ steps.form.outputs.team-name }}"
                 identity-hash: "$IDENTITY_HASH"

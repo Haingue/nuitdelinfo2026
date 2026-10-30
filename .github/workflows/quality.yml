@@ -1,9 +1,14 @@
 name: TPS Challenge — Usine Qualité
+
 on:
   workflow_call:
     inputs:
       team-name:
         description: "Nom de l'équipe (doit correspondre à l'issue d'inscription)"
+        required: true
+        type: string
+      identity-hash:
+        description: "Empreinte d'identité fournie par Toyota à l'inscription"
         required: true
         type: string
       # AUCUNE autre entrée : pas d'exclusions, pas de seuils, pas de chemins paramétrables.
@@ -14,49 +19,70 @@ permissions:
 
 env:
   CHALLENGE_REPO: Haingue/nuitdelinfo2026
-  TEMPLATE_PATH: templates/appeler-tps-challenge.yml
   SONAR_HOST: https://sonarcloud.io
-  # projectKey et org Sonar dérivés automatiquement : aucune déclaration manuelle côté équipe.
 
 jobs:
   # ------------------------------------------------------------------
-  # 1. Conformité : le fichier d'appel doit être strictement identique
-  #    au template officiel (comparaison par hash SHA-256).
+  # 1. Conformité : bloc d'appel identique au fichier généré à
+  #    l'inscription + empreinte d'identité cohérente.
   # ------------------------------------------------------------------
   conformite:
     name: 'Jidoka — Contrôle de conformité'
     runs-on: ubuntu-latest
     steps:
-      - name: Récupérer le fichier d'appel officiel de l'équipe (généré à l'inscription)
+      - name: Récupérer le fichier d'équipe (généré à l'inscription)
         run: |
-          TEAM="${{ inputs.team-name }}"
-          # Le fichier teams/<team>.yml est généré par notre Action d'inscription
-          # (team-name + identity-hash personnalisés, empreinte liée au repository_id).
-          curl -sfL "https://raw.githubusercontent.com/${CHALLENGE_REPO}/main/teams/${TEAM}.yml" -o /tmp/attendu.yml
-          if [ ! -s /tmp/attendu.yml ]; then
-            echo "::error::Aucun fichier d'inscription trouvé pour l'équipe '${TEAM}'. Vérifiez votre issue d'inscription sur ${CHALLENGE_REPO}."
+          # slug identique à celui du workflow d'inscription :
+          # minuscules, non-alnum -> tirets, tirets de bordure retirés
+          SLUG=$(printf '%s' "${{ inputs.team-name }}" \
+            | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-\n' '-' | sed 's/^-*//; s/-*$//')
+          echo "SLUG=$SLUG" >> "$GITHUB_ENV"
+
+          curl -sfL "https://raw.githubusercontent.com/${CHALLENGE_REPO}/main/teams/${SLUG}.yml" -o /tmp/equipe.yml
+          if [ ! -s /tmp/equipe.yml ]; then
+            echo "::error::Aucun fichier d'inscription trouvé pour l'équipe '${{ inputs.team-name }}' (teams/${SLUG}.yml). Vérifiez votre inscription sur ${CHALLENGE_REPO}."
             exit 1
           fi
-          echo "ATTENDU_SHA=$(sha256sum /tmp/attendu.yml | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - name: Vérifier l'empreinte d'identité (binding équipe <-> repo)
+        run: |
+          EXPECTED=$(sed -n 's/^identity-hash: *"\(.*\)"$/\1/p' /tmp/equipe.yml)
+          if [ -z "$EXPECTED" ]; then
+            echo "::error::Fichier d'équipe invalide (empreinte absente)."
+            exit 1
+          fi
+          if [ "${{ inputs.identity-hash }}" != "$EXPECTED" ]; then
+            echo "::error::Empreinte d'identité invalide pour cette équipe."
+            exit 1
+          fi
+          echo "::notice::Empreinte d'identité conforme ✔"
+          # NB : la validité cryptographique de l'empreinte
+          # (SHA-256 de repository_id + team-name + SEL secret) est re-vérifiée
+          # côté batch Toyota, où le sel est conservé.
 
       - name: Récupérer le fichier d'appel du repo de l'équipe
         run: |
           # github.workflow_ref = "owner/repo/.github/workflows/<fichier>@refs/heads/main"
-          CALLER_PATH=$(echo "${{ github.workflow_ref }}" | sed 's|@.*$||; s|^[^/]*|${{ github.repository }}|')
-          echo "CALLER_PATH=$CALLER_PATH" >> "$GITHUB_ENV"
-          curl -sfL "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/.github/workflows/$(basename $CALLER_PATH)" -o /tmp/caller.yml
+          CALLER_FILE=$(echo "${{ github.workflow_ref }}" | sed 's|@.*$||' | xargs basename)
+          echo "CALLER_FILE=$CALLER_FILE" >> "$GITHUB_ENV"
+          curl -sfL "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}/.github/workflows/${CALLER_FILE}" -o /tmp/caller.yml
 
-      - name: Comparer les hash (fichier d'appel == fichier généré par Toyota)
+      - name: Comparer les hash (bloc d'appel == bloc généré par Toyota)
         run: |
+          # Le fichier d'équipe contient des métadonnées PUIS le bloc d'appel
+          # délimité par le marqueur "# === FICHIER D'APPEL — ne pas modifier ===".
+          awk 'f{print} /^# === FICHIER D.APPEL/{f=1}' /tmp/equipe.yml > /tmp/attendu.yml
+          if [ ! -s /tmp/attendu.yml ]; then
+            echo "::error::Bloc d'appel introuvable dans le fichier d'équipe — contactez les organisateurs."
+            exit 1
+          fi
+          ATTENDU_SHA=$(sha256sum /tmp/attendu.yml | cut -d' ' -f1)
           CALLER_SHA=$(sha256sum /tmp/caller.yml | cut -d' ' -f1)
           if [ "$CALLER_SHA" != "$ATTENDU_SHA" ]; then
-            echo "::error::Fichier d'appel non conforme au fichier généré lors de votre inscription (teams/${{ inputs.team-name }}.yml). Restaurez-le sans le modifier."
+            echo "::error::Fichier d'appel non conforme au fichier généré lors de votre inscription. Restaurez-le sans le modifier."
             exit 1
           fi
           echo "::notice::Fichier d'appel conforme ✔"
-          # NB : la validité de l'empreinte identity-hash (SHA-256 de repository_id
-          # + team-name + sel secret) est vérifiée côté batch Toyota, où le sel
-          # est conservé — jamais dans ce workflow ni côté équipes.
 
       - name: Vérifier le repo public
         run: |
@@ -99,16 +125,19 @@ jobs:
             -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**" \
             -Dsonar.python.version=3.11
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token fourni par l'équipe (créé via notre doc d'onboarding)
-          SONAR_ORG: votre-org # organisation SonarCloud unique du challenge — imposée ici
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token de l'équipe (cf. procédure de l'énoncé)
+          SONAR_ORG: votre-org-sonarcloud # organisation SonarCloud du challenge — REMPLACER
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Vérifier le Quality Gate (bloquant = Jidoka)
         uses: sonarsource/sonarqube-quality-gate-action@master
         timeout-minutes: 5
         with:
-          scanMetadataReportUrl: ${{ steps.sonar.outputs.report-file }}
-        # Ce job échoue si le gate est rouge → le badge de la team devient rouge sur le leaderboard.
+          # report-task.txt généré par le scanner manuel ci-dessus
+          scanMetadataReportFile: .scannerwork/report-task.txt
+        # Ce job échoue si le gate est rouge -> run rouge visible côté équipe.
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # ------------------------------------------------------------------
   # 3. Supply chain — audit des dépendances (vulnérabilités critiques).
@@ -137,6 +166,12 @@ jobs:
           echo "CRIT_COUNT=${CRIT:-0}" >> "$GITHUB_ENV"
           echo "HIGH_COUNT=${HIGH:-0}" >> "$GITHUB_ENV"
           echo "::notice::CRIT=${CRIT:-0} HIGH=${HIGH:-0}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json
+          # lu par fetch_dependency_vulns côté batch (5 pts supply chain)
 
   # ------------------------------------------------------------------
   # 4. Heijunka — régularité des commits sur la nuit.
@@ -182,11 +217,13 @@ jobs:
     steps:
       - name: Synthèse
         run: |
-          echo "### 🏭 Rapport d'usine — ${{ inputs.team-name }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Contrôle | Statut |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Conformité template | ${{ needs.conformite.result }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Quality Gate SonarCloud | ${{ needs.sonar.result }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Vulnérabilités CRITICAL/HIGH | ${CRIT_COUNT:-?}/${HIGH_COUNT:-?} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Commits | ${COMMIT_COUNT:-?} (min. 20) |" >> "$GITHUB_STEP_SUMMARY"
+          {
+          echo "### 🏭 Rapport d'usine — ${{ inputs.team-name }}"
+          echo ""
+          echo "| Contrôle | Statut |"
+          echo "|---|---|"
+          echo "| Conformité & identité | ${{ needs.conformite.result }} |"
+          echo "| Quality Gate SonarCloud | ${{ needs.sonar.result }} |"
+          echo "| Vulnérabilités CRITICAL/HIGH | ${CRIT_COUNT:-?}/${HIGH_COUNT:-?} |"
+          echo "| Commits | ${COMMIT_COUNT:-?} (min. 20) |"
+          } >> "$GITHUB_STEP_SUMMARY"
