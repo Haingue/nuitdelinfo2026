@@ -16,9 +16,7 @@ Vous n'allez pas seulement développer une application. Vous allez construire un
 - **Poka-yoke** — anti-erreur : des garde-fous qui empêchent le défaut d'entrer dans la chaîne.
 
 <center>
-
     <img alt="Toyota Production System" src="resources/Toyota-Systeme-de-production-Maison.jpg" style="width:400px"/>
-
 </center>
 
 **Le produit qui gagne n'est pas celui qui fait le plus de fonctionnalités. C'est celui qui sort de la ligne avec la meilleure qualité, livré par l'usine la plus respectueuse de ses standards.**
