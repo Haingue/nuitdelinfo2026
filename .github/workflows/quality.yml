@@ -16,6 +16,11 @@ on:
 permissions:
   contents: read
   issues: read
+  # NOTE : un workflow réutilisable est plafonné par les permissions accordées
+  # par le workflow APPELANT. Le fichier d'appel généré à l'inscription
+  # accorde explicitement contents:read + issues:read — sans ce bloc côté équipe,
+  # l'appel échoue sur les repos dont le GITHUB_TOKEN par défaut est restrictif.
+  # Ne jamais élever ces permissions : ce workflow scanne du code étudiant.
 
 env:
   CHALLENGE_REPO: Haingue/nuitdelinfo2026

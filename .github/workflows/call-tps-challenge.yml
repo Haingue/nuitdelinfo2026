@@ -1,5 +1,5 @@
 # Template officiel — à déposer TEL QUEL dans votre repo :
-#   .github/workflows/appeler-tps-challenge.yml
+#   .github/workflows/call-tps-challenge.yml
 #
 # ⚠️ Le fichier définitif vous est remis par Toyota lors de votre inscription
 #    (il contient votre team-name et votre empreinte d'identité).
@@ -11,13 +11,19 @@ name: "TPS Challenge — Appel de l'usine qualité"
 on:
   push:
     branches: [main]
-  workflow_dispatch: # permet de déclencher un scan manuel
+  workflow_dispatch:   # permet de déclencher un scan manuel
+
+# OBLIGATOIRE : le workflow réutilisable Toyota exige contents:read + issues:read.
+# Sans ce bloc, l'appel échoue ("the workflow is not valid" / erreurs de permissions)
+# si les permissions par défaut du GITHUB_TOKEN de votre repo sont restrictives.
+permissions:
+  contents: read
+  issues: read
 
 jobs:
   tps-challenge:
-    # ⚠️ NE PAS MODIFIER CETTE LIGNE — tag v1 contrôlé par l'organisation Toyota.
     uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1
     with:
-      team-name: 'REMPLACER_PAR_LE_NOM_DE_VOTRE_EQUIPE'
-      identity-hash: 'REMPLACER_PAR_LEMPREINTE_FOURNIE_A_LINSCRIPTION'
+      team-name: "REMPLACER_PAR_LE_NOM_DE_VOTRE_EQUIPE"
+      identity-hash: "REMPLACER_PAR_LEMPREINTE_FOURNIE_A_LINSCRIPTION"
     secrets: inherit

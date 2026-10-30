@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: 📖 Règlement et énoncé du défi
-    url: https://github.com/Haingue/nuitdelinfo2026#
+    url: https://github.com/Haingue/nuitdelinfo2026#readme
     about: Barème, contraintes d'éligibilité et procédure SonarCloud
+  - name: 🛠️ Guide de dépannage
+    url: https://github.com/Haingue/nuitdelinfo2026/blob/main/docs/DEBOGAGE.md
+    about: Message d'erreur rouge ? Commencez ici avant d'ouvrir une issue d'entraide
