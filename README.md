@@ -29,7 +29,7 @@ Vous n'allez pas seulement développer une application. Vous allez construire un
 2. Ajoutez le fichier d'appel du workflow Toyota **sans le modifier** (template fourni, 3 lignes, `uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1`).
 3. Ouvrez une **issue d'inscription** sur notre repo du défi avec le template prévu (nom d'équipe + URL du repo).
 4. À chaque push sur `main`, notre usine mesure automatiquement votre qualité : SonarCloud (gate, maintenabilité, sécurité, couverture) + audit des dépendances.
-5. Suivez le **leaderboard en direct** (mis à jour toutes les 15 minutes) sur la page du défi.
+5. Suivez le [**leaderboard en direct**](https://haingue.github.io/nuitdelinfo2026/) (mis à jour toutes les 15 minutes) sur la page du défi.
 
 ---
 

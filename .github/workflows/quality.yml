@@ -327,5 +327,5 @@ jobs:
           echo ""
           echo "Le batch est planifié toutes les 15 minutes. Ce score peut ne pas encore inclure cette exécution."
           echo ""
-          echo "[Suivre les mises à jour du classement](https://github.com/${CHALLENGE_REPO}/actions/workflows/leaderboard.yml)"
+          echo "[Suivre les mises à jour du classement](https://haingue.github.io/nuitdelinfo2026/)"
           } >> "$GITHUB_STEP_SUMMARY"
