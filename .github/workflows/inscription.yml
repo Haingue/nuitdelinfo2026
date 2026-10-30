@@ -1,0 +1,170 @@
+name: TPS Challenge — Bot d'inscription
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write # commit de teams/<team>.yml
+  issues: write # labels + commentaires
+
+concurrency:
+  group: inscription-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  inscrire:
+    name: "Validation & génération du fichier d'équipe"
+    if: contains(github.event.issue.labels.*.name, 'inscription')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------------------------------------------------------
+      # 1. Extraire les réponses du formulaire (format GitHub :
+      #    "### Label du champ" suivi de la valeur)
+      # ---------------------------------------------------------
+      - name: Extraire team-name et repo-url
+        id: form
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          TEAM_NAME=$(printf '%s' "$ISSUE_BODY" | sed -n 's/^### Nom de votre équipe$//;T;p;' >/dev/null; \
+            printf '%s' "$ISSUE_BODY" | awk '/^### Nom de votre équipe$/{getline; getline; print; exit}')
+          REPO_URL=$(printf '%s' "$ISSUE_BODY" | awk '/^### URL de votre repository GitHub public$/{getline; getline; print; exit}')
+          REPO_FULL=$(printf '%s' "$REPO_URL" | sed 's|https://github.com/||; s|/$||')
+          echo "team-name=$(echo "$TEAM_NAME" | tr -d '\r')" >> "$GITHUB_OUTPUT"
+          echo "repo-full=$(echo "$REPO_FULL" | tr -d '\r')" >> "$GITHUB_OUTPUT"
+          # slug de fichier : minuscules, tirets
+          SLUG=$(echo "$TEAM_NAME" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-' '-' | sed 's/^-*//; s/-*$//')
+          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+
+      # ---------------------------------------------------------
+      # 2. Vérifier l'unicité (nom d'équipe et repo)
+      # ---------------------------------------------------------
+      - name: Vérifier l'unicité de l'inscription
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TEAM: ${{ steps.form.outputs.team-name }}
+          REPO: ${{ steps.form.outputs.repo-full }}
+          SLUG: ${{ steps.form.outputs.slug }}
+        run: |
+          FAIL=0
+          if [ -f "teams/${SLUG}.yml" ]; then
+            echo "::error::Une équipe avec ce nom est déjà inscrite."
+            FAIL=1
+          fi
+          if grep -rq "repo: ${REPO}$" teams/ 2>/dev/null; then
+            echo "::error::Ce repository est déjà inscrit."
+            FAIL=1
+          fi
+          if [ "$FAIL" = "1" ]; then
+            gh issue comment ${{ github.event.issue.number }} --body \
+              "⛔ Inscription refusée : nom d'équipe ou repository déjà utilisé. Contactez les organisateurs."
+            gh issue close ${{ github.event.issue.number }}
+            exit 1
+          fi
+
+      # ---------------------------------------------------------
+      # 3. Vérifier que le repo existe et est public
+      # ---------------------------------------------------------
+      - name: Vérifier le repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ steps.form.outputs.repo-full }}
+        run: |
+          INFO=$(gh api "repos/${REPO}" 2>/dev/null) || {
+            gh issue comment ${{ github.event.issue.number }} --body \
+              "⛔ Repository \`${REPO}\` introuvable ou privé. Corrigez l'URL puis rouvrez une issue d'inscription."
+            gh issue close ${{ github.event.issue.number }}
+            exit 1
+          }
+          REPO_ID=$(echo "$INFO" | jq .id)
+          VISIBILITY=$(echo "$INFO" | jq -r .visibility)
+          if [ "$VISIBILITY" != "public" ]; then
+            gh issue comment ${{ github.event.issue.number }} --body \
+              "⛔ Le repository doit être **public** (requis pour SonarCloud et l'évaluation)."
+            gh issue close ${{ github.event.issue.number }}
+            exit 1
+          fi
+          echo "REPO_ID=$REPO_ID" >> "$GITHUB_ENV"
+
+      # ---------------------------------------------------------
+      # 4. Calculer l'empreinte d'identité
+      #    SHA-256(repository_id + team-name + SEL)
+      # ---------------------------------------------------------
+      - name: Calculer l'empreinte d'identité
+        env:
+          IDENTITY_SALT: ${{ secrets.IDENTITY_SALT }}
+        run: |
+          HASH=$(printf '%s%s%s' "$REPO_ID" "${{ steps.form.outputs.team-name }}" "$IDENTITY_SALT" \
+            | sha256sum | cut -d' ' -f1)
+          echo "IDENTITY_HASH=$HASH" >> "$GITHUB_ENV"
+
+      # ---------------------------------------------------------
+      # 5. Générer teams/<slug>.yml : le fichier d'appel
+      #    personnalisé (source de vérité de la conformité CI)
+      # ---------------------------------------------------------
+      - name: Générer le fichier d'équipe
+        run: |
+          mkdir -p teams
+          cat > "teams/${{ steps.form.outputs.slug }}.yml" <<YML
+          # TPS Challenge — fichier d'équipe généré automatiquement
+          # Équipe : ${{ steps.form.outputs.team-name }}
+          # Repo   : ${{ steps.form.outputs.repo-full }}
+          team-name: "${{ steps.form.outputs.team-name }}"
+          repo: "${{ steps.form.outputs.repo-full }}"
+          identity-hash: "$IDENTITY_HASH"
+
+          # ↓↓ Fichier d'appel à copier TEL QUEL dans votre repo ↓↓
+          name: "TPS Challenge — Appel de l'usine qualité"
+          on:
+            push:
+              branches: [main]
+            workflow_dispatch:
+          jobs:
+            tps-challenge:
+              uses: votre-org/tpsc-challenge/.github/workflows/quality.yml@v1
+              with:
+                team-name: "${{ steps.form.outputs.team-name }}"
+                identity-hash: "$IDENTITY_HASH"
+              secrets: inherit
+          # ↑↑ NE PAS MODIFIER — vérifié par hash à chaque exécution ↑↑
+          YML
+
+      # ---------------------------------------------------------
+      # 6. Committer et répondre dans l'issue
+      # ---------------------------------------------------------
+      - name: Committer le fichier d'équipe
+        run: |
+          git config user.name "tpsc-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add "teams/${{ steps.form.outputs.slug }}.yml"
+          git commit -m "inscription: ${{ steps.form.outputs.team-name }} [skip ci]"
+          git push
+
+      - name: Répondre à l'équipe
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SLUG: ${{ steps.form.outputs.slug }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --body "$(cat <<COMMENT
+          ## ✅ Inscription validée — bienvenue ${{ steps.form.outputs.team-name }} !
+
+          Votre fichier d'appel personnalisé est prêt :
+
+          1. Copiez le bloc ci-dessous dans un fichier **\`.github/workflows/appeler-tps-challenge.yml\`** de votre repository (**sans rien modifier**) :
+
+          \`\`\`yaml
+          $(sed -n '/# ↓↓/,$p' "teams/${SLUG}.yml" | sed '1d')
+          \`\`\`
+
+          2. Créez votre token SonarCloud et ajoutez-le en secret \`SONAR_TOKEN\` dans votre repo (cf. l'énoncé du défi).
+          3. Poussez sur \`main\` : l'usine qualité démarre automatiquement.
+          4. Suivez votre progression sur le leaderboard ! 🏭
+
+          ⚠️ **Ne modifiez jamais ce fichier** : son intégrité est vérifiée par hash à chaque exécution.
+          COMMENT
+          )"
+          gh issue edit ${{ github.event.issue.number }} --remove-label "inscription"
+          gh issue edit ${{ github.event.issue.number }} --add-label "inscrit ✅"
