@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 jobs:
   tps-challenge:
-    uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1
+    uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v0
     with:
       team-name: 'TMMF_Test'
       identity-hash: '09bc3828155a915415a73ab38dc43612ace52f06bc5bff5306f53ef01fefc8d8'
