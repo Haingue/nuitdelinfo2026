@@ -1,0 +1,17 @@
+name: 🏭 Inscription au TPS Challenge
+labels: [inscription]
+body:
+  - type: input
+    id: team-name
+    attributes:
+      label: Nom de votre équipe
+      placeholder: "Les Kaizen Warriors"
+    validations:
+      required: true
+  - type: input
+    id: repo-url
+    attributes:
+      label: URL de votre repository GitHub public
+      description: Exemple : https://github.com/mon-equipe/mon-projet
+    validations:
+      required: true
