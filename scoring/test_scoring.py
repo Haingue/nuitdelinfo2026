@@ -30,12 +30,9 @@ class DependencyVulnsTests(unittest.TestCase):
     def setUp(self):
         self.team = scoring.Team('Test', 'owner/repo', 'org', 0)
         self.runs = [
-            {'id': 1, 'created_at': '2026-10-30T12:00:00Z',
-             'head_branch': 'main', 'conclusion': 'success'},
-            {'id': 2, 'created_at': '2026-10-30T13:00:00Z',
-             'head_branch': 'main', 'conclusion': 'failure'},
-            {'id': 3, 'created_at': '2026-10-30T14:00:00Z',
-             'head_branch': 'feature', 'conclusion': 'success'},
+            {'id': 1, 'created_at': '2026-10-30T12:00:00Z', 'head_branch': 'main', 'conclusion': 'success'},
+            {'id': 2, 'created_at': '2026-10-30T13:00:00Z', 'head_branch': 'main', 'conclusion': 'failure'},
+            {'id': 3, 'created_at': '2026-10-30T14:00:00Z', 'head_branch': 'feature', 'conclusion': 'success'},
         ]
 
     def fetch(self, report, artifacts=None):
