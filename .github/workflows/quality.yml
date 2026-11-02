@@ -144,12 +144,30 @@ jobs:
   # ------------------------------------------------------------------
   sonar:
     name: 'Scan qualité SonarCloud'
-    needs: conformite
+    needs: [conformite, tests]
+    if: always() && needs.conformite.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # historique complet pour la trajectoire Kaizen
+
+      - name: Récupérer les rapports de couverture Java
+        if: always()
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: coverage-reports
+          path: coverage-artifacts
+
+      - name: Vérifier les rapports de couverture disponibles
+        run: |
+          if find coverage-artifacts -type f -name '*.xml' -print -quit 2>/dev/null | grep -q .; then
+            echo "Rapport XML de couverture téléchargé :"
+            find coverage-artifacts -type f -name '*.xml' -print
+          else
+            echo "::warning::Aucun rapport XML JaCoCo disponible; SonarCloud affichera une couverture nulle."
+          fi
 
       - name: Installer SonarScanner
         run: |
@@ -168,6 +186,8 @@ jobs:
             -Dsonar.sources=. \
             -Dsonar.exclusions="**/*.min.js,**/vendor/**,**/dist/**,**/node_modules/**" \
             -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**" \
+            -Dsonar.coverage.jacoco.xmlReportPaths="coverage-artifacts/**/jacoco*.xml" \
+            -Dsonar.python.coverage.reportPaths="coverage-artifacts/python/coverage.xml" \
             -Dsonar.python.version=3.11
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token de l'équipe (cf. procédure de l'énoncé)
@@ -354,11 +374,12 @@ jobs:
               INSTALL_RESULT=0
             fi
             if [ "$INSTALL_RESULT" -eq 0 ]; then
-              python -m pip install pytest
+              python -m pip install pytest pytest-cov
               INSTALL_RESULT=$?
             fi
             if [ "$INSTALL_RESULT" -eq 0 ]; then
-              python -m pytest -q
+              mkdir -p coverage-artifacts/python
+              python -m pytest -q --cov --cov-report=xml:coverage-artifacts/python/coverage.xml
               TEST_RESULT=$?
             else
               TEST_RESULT=$INSTALL_RESULT
@@ -381,9 +402,43 @@ jobs:
                   mvn -B verify
                 fi
               elif [ -f gradlew ]; then
-                bash ./gradlew verify --no-daemon
+                cat > "$RUNNER_TEMP/jacoco.init.gradle" <<'GRADLE'
+          allprojects {
+              apply plugin: 'jacoco'
+              tasks.withType(Test).configureEach {
+                  finalizedBy tasks.named('jacocoTestReport')
+              }
+                jacoco {
+                  toolVersion = '0.8.14'
+                }
+              tasks.named('jacocoTestReport') {
+                  reports {
+                      xml.required = true
+                  }
+                  executionData tasks.withType(Test)
+              }
+          }
+          GRADLE
+                bash ./gradlew test --no-daemon --init-script "$RUNNER_TEMP/jacoco.init.gradle"
               else
-                gradle verify --no-daemon
+                cat > "$RUNNER_TEMP/jacoco.init.gradle" <<'GRADLE'
+          allprojects {
+              apply plugin: 'jacoco'
+              tasks.withType(Test).configureEach {
+                  finalizedBy tasks.named('jacocoTestReport')
+              }
+                jacoco {
+                  toolVersion = '0.8.14'
+                }
+              tasks.named('jacocoTestReport') {
+                  reports {
+                      xml.required = true
+                  }
+                  executionData tasks.withType(Test)
+              }
+          }
+          GRADLE
+                gradle test --no-daemon --init-script "$RUNNER_TEMP/jacoco.init.gradle"
               fi
             )
             JAVA_RESULT=$?
@@ -472,6 +527,17 @@ jobs:
           name: test-results
           path: test-results.json
           if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: |
+            **/target/site/jacoco/jacoco.xml
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+            coverage-artifacts/python/coverage.xml
+          if-no-files-found: warn
+          retention-days: 1
 
   # ------------------------------------------------------------------
   # 3. Supply chain — audit des dépendances (vulnérabilités critiques).

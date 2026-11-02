@@ -47,7 +47,7 @@ Trois acteurs, deux repos, zéro serveur :
 
 - _conformité_ : slug → `teams/<slug>.yml`, empreinte d'entrée == empreinte enregistrée, fichier d'appel == bloc extrait (hash SHA-256, byte pour byte) ;
 - _Sonar_ : scan complet (exclusions imposées par nous), Quality Gate **bloquant** ; les artefacts `sonar-analysis-report` (JSON détaillé) et `sonar-analysis-report-detailed` (métadonnées du scanner) sont téléchargeables depuis la run pour diagnostiquer l'analyse ;
-- _Tests_ : détecte les projets Java (Maven/Gradle), Python (pytest) et Node (script `test`), vérifie aussi les rapports JUnit Surefire/Gradle pour Java, puis archive le résultat même si les tests échouent ; ce statut est informatif et n'ajoute pas de points au score ;
+- _Tests_ : détecte les projets Java (Maven/Gradle), Python (pytest) et Node (script `test`), vérifie aussi les rapports JUnit Surefire/Gradle pour Java, puis archive le résultat même si les tests échouent ; produit des rapports JaCoCo XML (Java) et Cobertura XML via `pytest-cov` (Python), transmis ensuite au job SonarCloud ; ce statut est informatif et n'ajoute pas de points au score ;
 - _Trivy_ : vulnérabilités HIGH/CRITICAL des dépendances (artefact `trivy-report`) ;
 - _Heijunka_ : export de l'historique de commits (artefact `heijunka-history`) ;
 - _rapport_ : métriques de cette exécution et dernier score officiel publié dans `data/leaderboard.json`, sélectionné par dépôt, avec rang, éligibilité, détail et horodatage. Le score peut ne pas encore inclure l'exécution courante ; s'il est absent ou inaccessible, le résumé le signale sans faire échouer le workflow.
