@@ -188,6 +188,133 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: Exporter le rapport d'analyse SonarCloud
+        if: always()
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORG: ${{ inputs.sonar-org }}
+          SONAR_HOST: ${{ env.SONAR_HOST }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          mkdir -p sonar-analysis
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+          from urllib.error import HTTPError, URLError
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
+
+          host = os.environ["SONAR_HOST"].rstrip("/")
+          repository = os.environ["REPOSITORY"]
+          branch = os.environ["BRANCH"]
+          project_key = repository.replace("/", "_")
+          token = os.environ.get("SONAR_TOKEN", "")
+          report = {
+            "project": project_key,
+            "repository": repository,
+            "organization": os.environ["SONAR_ORG"],
+            "branch": branch,
+            "dashboard_url": f"{host}/project/overview?id={project_key}&branch={branch}",
+            "scan_metadata": {},
+            "quality_gate": None,
+            "measures": None,
+            "issues": {"total": 0, "items": [], "truncated": False},
+            "errors": [],
+          }
+
+          metadata_path = Path(".scannerwork/report-task.txt")
+          if metadata_path.is_file():
+            report["scan_metadata"] = {
+              key.strip(): value.strip()
+              for line in metadata_path.read_text(errors="replace").splitlines()
+              if "=" in line
+              for key, value in [line.split("=", 1)]
+            }
+          else:
+            report["errors"].append("Scanner metadata not found; no completed upload was confirmed.")
+
+          def get_json(endpoint, params):
+            query = urlencode(params)
+            request = Request(f"{host}/api/{endpoint}?{query}")
+            credentials = base64.b64encode(f"{token}:".encode()).decode()
+            request.add_header("Authorization", f"Basic {credentials}")
+            with urlopen(request, timeout=30) as response:
+              return json.load(response)
+
+          if token and metadata_path.is_file():
+            common = {"organization": os.environ["SONAR_ORG"], "branch": branch}
+            for section, endpoint, params in (
+              ("quality_gate", "qualitygates/project_status",
+               {**common, "projectKey": project_key}),
+              ("measures", "measures/component", {
+                **common,
+                "component": project_key,
+                "metricKeys": ",".join((
+                  "coverage", "duplicated_lines_density", "sqale_rating",
+                  "sqale_index", "sqale_debt_ratio", "code_smells",
+                  "security_rating", "reliability_rating", "bugs", "vulnerabilities",
+                )),
+              }),
+            ):
+              try:
+                report[section] = get_json(endpoint, params)
+              except (HTTPError, URLError, TimeoutError, ValueError) as error:
+                report["errors"].append(f"{section}: {type(error).__name__}")
+
+            try:
+              page = 1
+              page_size = 500
+              while page <= 100:
+                result = get_json("issues/search", {
+                  **common,
+                  "componentKeys": project_key,
+                  "resolved": "false",
+                  "ps": page_size,
+                  "p": page,
+                })
+                items = result.get("issues", [])
+                report["issues"]["total"] = result.get("total", len(items))
+                report["issues"]["items"].extend(items)
+                if not items or len(report["issues"]["items"]) >= report["issues"]["total"]:
+                  break
+                page += 1
+              report["issues"]["truncated"] = (
+                len(report["issues"]["items"]) < report["issues"]["total"]
+              )
+            except (HTTPError, URLError, TimeoutError, ValueError) as error:
+              report["errors"].append(f"issues: {type(error).__name__}")
+          elif not token:
+            report["errors"].append("Sonar token unavailable to export step.")
+
+          output = Path("sonar-analysis/report.json")
+          output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+          print(f"Rapport SonarCloud écrit: {output} ({len(report['issues']['items'])} issues exportées).")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+            summary.write("\n### Rapport détaillé SonarCloud\n\n")
+            summary.write(f"Projet : [{project_key}]({report['dashboard_url']})\n\n")
+            summary.write("Téléchargez l'artefact **sonar-analysis-report** de cette exécution pour consulter `report.json` (Quality Gate, mesures et issues).\n")
+          PY
+
+      - name: Télécharger le rapport d'analyse SonarCloud
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-analysis-report-detailed
+          path: .scannerwork/report-task.txt
+          if-no-files-found: error
+          retention-days: 1
+      - name: Télécharger le rapport d'analyse SonarCloud (JSON)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-analysis-report
+          path: sonar-analysis/report.json
+          if-no-files-found: error
+          retention-days: 1
+
   tests:
     name: 'Tests — validation du projet'
     needs: conformite

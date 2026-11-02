@@ -46,7 +46,7 @@ Trois acteurs, deux repos, zéro serveur :
 4. **À chaque push sur `main`** — `quality.yml` s'exécute dans le contexte du repo équipe :
 
 - _conformité_ : slug → `teams/<slug>.yml`, empreinte d'entrée == empreinte enregistrée, fichier d'appel == bloc extrait (hash SHA-256, byte pour byte) ;
-- _Sonar_ : scan complet (exclusions imposées par nous), Quality Gate **bloquant** ;
+- _Sonar_ : scan complet (exclusions imposées par nous), Quality Gate **bloquant** ; les artefacts `sonar-analysis-report` (JSON détaillé) et `sonar-analysis-report-detailed` (métadonnées du scanner) sont téléchargeables depuis la run pour diagnostiquer l'analyse ;
 - _Tests_ : détecte les projets Java (Maven/Gradle), Python (pytest) et Node (script `test`), vérifie aussi les rapports JUnit Surefire/Gradle pour Java, puis archive le résultat même si les tests échouent ; ce statut est informatif et n'ajoute pas de points au score ;
 - _Trivy_ : vulnérabilités HIGH/CRITICAL des dépendances (artefact `trivy-report`) ;
 - _Heijunka_ : export de l'historique de commits (artefact `heijunka-history`) ;
