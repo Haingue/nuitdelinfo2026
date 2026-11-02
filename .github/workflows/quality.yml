@@ -202,7 +202,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '25'
 
       - name: Détecter et exécuter les suites Java/Python/Node
         id: run-tests
