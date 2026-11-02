@@ -298,14 +298,6 @@ jobs:
             summary.write("Téléchargez l'artefact **sonar-analysis-report** de cette exécution pour consulter `report.json` (Quality Gate, mesures et issues).\n")
           PY
 
-      - name: Télécharger le rapport d'analyse SonarCloud
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sonar-analysis-report-detailed
-          path: .scannerwork/report-task.txt
-          if-no-files-found: error
-          retention-days: 1
       - name: Télécharger le rapport d'analyse SonarCloud (JSON)
         if: always()
         uses: actions/upload-artifact@v4
@@ -384,14 +376,14 @@ jobs:
               cd "$JAVA_DIR" || exit 1
               if [ -f pom.xml ]; then
                 if [ -f mvnw ]; then
-                  bash ./mvnw -B test
+                  bash ./mvnw -B verify
                 else
-                  mvn -B test
+                  mvn -B verify
                 fi
               elif [ -f gradlew ]; then
-                bash ./gradlew test --no-daemon
+                bash ./gradlew verify --no-daemon
               else
-                gradle test --no-daemon
+                gradle verify --no-daemon
               fi
             )
             JAVA_RESULT=$?
