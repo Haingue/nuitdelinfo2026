@@ -10,6 +10,38 @@ export default function TeamDetail({ team, history, onClose }) {
   }, [onClose])
 
   const snapshots = history[team.team] || []
+  const testStatusLabels = {
+    passed: 'réussis',
+    failed: 'échec',
+    not_found: 'aucune suite détectée',
+    unavailable: 'indisponible',
+  }
+  const quality = team.details?.quality_breakdown
+  const qualityRows = quality
+    ? [
+        ['Quality Gate SonarCloud', quality.gate, 20],
+        [
+          `Maintenabilité Sonar (${quality.maintainability_rating ?? 'N/D'})`,
+          quality.maintainability,
+          15,
+        ],
+        [
+          `Sécurité Sonar (${quality.security_rating ?? 'N/D'})`,
+          quality.security,
+          10,
+        ],
+        [
+          `Couverture Sonar (${quality.coverage_percent ?? 'N/D'}%)`,
+          quality.coverage,
+          10,
+        ],
+        [
+          'Dépendances sans vulnérabilité HIGH/CRITICAL',
+          quality.supply_chain,
+          5,
+        ],
+      ]
+    : []
 
   return (
     <div
@@ -44,6 +76,48 @@ export default function TeamDetail({ team, history, onClose }) {
             📊 Détail actuel par type de score
           </h3>
           <BreakdownChart breakdown={team.breakdown} />
+          {quality && (
+            <div className="mt-4 border-t border-slate-800 pt-3">
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Détail qualité · {quality.total}/60
+              </h4>
+              <dl className="space-y-1 text-sm">
+                {qualityRows.map(([label, points, max]) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between gap-4"
+                  >
+                    <dt className="text-slate-400">{label}</dt>
+                    <dd className="text-right tabular-nums text-slate-200">
+                      {points}/{max}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {(quality.technical_debt_minutes != null ||
+                quality.technical_debt_ratio_percent != null) && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Dette technique Sonar :{' '}
+                  {quality.technical_debt_minutes ?? 'N/D'} min
+                  {quality.technical_debt_ratio_percent != null &&
+                    ` · ratio ${quality.technical_debt_ratio_percent}%`}
+                  {quality.code_smells != null &&
+                    ` · ${quality.code_smells} code smells`}
+                </p>
+              )}
+            </div>
+          )}
+          {team.details?.tests && (
+            <p className="mt-3 text-sm text-slate-400">
+              Tests CI :{' '}
+              <span className="text-slate-200">
+                {testStatusLabels[team.details.tests.status] ??
+                  team.details.tests.status}
+              </span>
+              {team.details.tests.frameworks &&
+                ` · ${team.details.tests.frameworks}`}
+            </p>
+          )}
         </div>
 
         <button

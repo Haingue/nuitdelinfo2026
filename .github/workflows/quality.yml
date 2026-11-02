@@ -188,6 +188,133 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  tests:
+    name: 'Tests — validation du projet'
+    needs: conformite
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.run-tests.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Java pour les projets Maven/Gradle
+        if: hashFiles('**/pom.xml', '**/build.gradle', '**/build.gradle.kts') != ''
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Détecter et exécuter les suites Java/Python/Node
+        id: run-tests
+        run: |
+          set +e
+          DETECTED=0
+          FAILED=0
+          FRAMEWORKS=""
+
+          record_suite() {
+            LABEL="$1"
+            RESULT="$2"
+            DETECTED=$((DETECTED + 1))
+            FRAMEWORKS="${FRAMEWORKS:+$FRAMEWORKS, }$LABEL"
+            if [ "$RESULT" -ne 0 ]; then
+              FAILED=$((FAILED + 1))
+            fi
+          }
+
+          PYTHON_TEST=$(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv \) -prune -o \
+            -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print -quit)
+          if [ -n "$PYTHON_TEST" ]; then
+            REQUIREMENTS=$(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv \) -prune -o \
+              -type f -name requirements.txt -print -quit)
+            if [ -n "$REQUIREMENTS" ]; then
+              python -m pip install -r "$REQUIREMENTS"
+              INSTALL_RESULT=$?
+            else
+              INSTALL_RESULT=0
+            fi
+            if [ "$INSTALL_RESULT" -eq 0 ]; then
+              python -m pip install pytest
+              INSTALL_RESULT=$?
+            fi
+            if [ "$INSTALL_RESULT" -eq 0 ]; then
+              python -m pytest -q
+              TEST_RESULT=$?
+            else
+              TEST_RESULT=$INSTALL_RESULT
+            fi
+            record_suite "Python (pytest)" "$TEST_RESULT"
+          fi
+
+          JAVA_BUILD=$(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv -o -name build -o -name target \) -prune -o \
+            -type f \( -name pom.xml -o -name build.gradle -o -name build.gradle.kts \) -print -quit)
+          JAVA_TEST=$(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv -o -name build -o -name target \) -prune -o \
+            -type f \( -path '*/src/test/*' -o -name '*Test.java' -o -name '*Tests.java' -o -name '*Test.kt' -o -name '*Tests.kt' \) -print -quit)
+          if [ -n "$JAVA_BUILD" ] && [ -n "$JAVA_TEST" ]; then
+            JAVA_DIR=$(dirname "$JAVA_BUILD")
+            (
+              cd "$JAVA_DIR" || exit 1
+              if [ -f pom.xml ]; then
+                if [ -f mvnw ]; then
+                  bash ./mvnw -B test
+                else
+                  mvn -B test
+                fi
+              elif [ -f gradlew ]; then
+                bash ./gradlew test --no-daemon
+              else
+                gradle test --no-daemon
+              fi
+            )
+            record_suite "Java ($(dirname "$JAVA_BUILD"))" "$?"
+          fi
+
+          while IFS= read -r -d '' PACKAGE; do
+            if ! node -e 'process.exit(require(process.argv[1]).scripts?.test ? 0 : 1)' "$PWD/$PACKAGE"; then
+              continue
+            fi
+            PACKAGE_DIR=$(dirname "$PACKAGE")
+            (
+              cd "$PACKAGE_DIR" || exit 1
+              if [ -f pnpm-lock.yaml ]; then
+                corepack enable && pnpm install --frozen-lockfile && CI=true pnpm test
+              elif [ -f yarn.lock ]; then
+                corepack enable && yarn install --frozen-lockfile && CI=true yarn test
+              elif [ -f package-lock.json ]; then
+                npm ci && CI=true npm test
+              else
+                npm install && CI=true npm test
+              fi
+            )
+            record_suite "Node ($(dirname "$PACKAGE"))" "$?"
+          done < <(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv \) -prune -o \
+            -type f -name package.json -print0)
+
+          if [ "$DETECTED" -eq 0 ]; then
+            STATUS="not_found"
+            echo "::warning::Aucune suite Python ou script test Node détecté ; aucun point de test accordé."
+          elif [ "$FAILED" -gt 0 ]; then
+            STATUS="failed"
+            echo "::error::$FAILED suite(s) de tests en échec sur $DETECTED."
+          else
+            STATUS="passed"
+            echo "::notice::$DETECTED suite(s) de tests réussie(s)."
+          fi
+
+          jq -n --arg status "$STATUS" --argjson detected "$DETECTED" \
+            --argjson failed "$FAILED" --arg frameworks "$FRAMEWORKS" \
+            '{status: $status, detected: $detected, failed: $failed, frameworks: $frameworks}' \
+            > test-results.json
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          if [ "$STATUS" = "failed" ]; then exit 1; fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results.json
+          if-no-files-found: error
+
   # ------------------------------------------------------------------
   # 3. Supply chain — audit des dépendances (vulnérabilités critiques).
   # ------------------------------------------------------------------
@@ -269,7 +396,7 @@ jobs:
   # ------------------------------------------------------------------
   rapport:
     name: "Rapport d'usine"
-    needs: [conformite, sonar, dependances, rythme]
+    needs: [conformite, sonar, tests, dependances, rythme]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -279,6 +406,7 @@ jobs:
           TEAM_REPO: ${{ github.repository }}
           CONFORMITE: ${{ needs.conformite.result }}
           SONAR: ${{ needs.sonar.result }}
+          TESTS: ${{ needs.tests.outputs.status }}
           CRIT_COUNT: ${{ needs.dependances.outputs.critical }}
           HIGH_COUNT: ${{ needs.dependances.outputs.high }}
           COMMIT_COUNT: ${{ needs.rythme.outputs.commits }}
@@ -290,6 +418,7 @@ jobs:
           echo "|---|---|"
           echo "| Conformité & identité | ${CONFORMITE} |"
           echo "| Quality Gate SonarCloud | ${SONAR} |"
+          echo "| Tests détectés | ${TESTS:-indisponible} |"
           echo "| Vulnérabilités CRITICAL/HIGH détectées | ${CRIT_COUNT:-indisponible}/${HIGH_COUNT:-indisponible} |"
           echo "| Commits du dépôt (toutes dates) | ${COMMIT_COUNT:-indisponible} |"
           echo ""
@@ -315,6 +444,12 @@ jobs:
               "| Composante | Points |",
               "|---|---:|",
               "| Qualité | \(.breakdown.qualite // 0) / 60 |",
+              "| Quality Gate SonarCloud | \\(.details.quality_breakdown.gate // 0) / 20 |",
+              "| Maintenabilité Sonar (\\(.details.quality_breakdown.maintainability_rating // \"N/D\")) | \\(.details.quality_breakdown.maintainability // 0) / 15 |",
+              "| Dette technique Sonar | \\(.details.quality_breakdown.technical_debt_minutes // \"N/D\") min · ratio \\(.details.quality_breakdown.technical_debt_ratio_percent // \"N/D\")% |",
+              "| Sécurité Sonar (\\(.details.quality_breakdown.security_rating // \"N/D\")) | \\(.details.quality_breakdown.security // 0) / 10 |",
+              "| Couverture Sonar (\\(.details.quality_breakdown.coverage_percent // \"N/D\")%) | \\(.details.quality_breakdown.coverage // 0) / 10 |",
+              "| Dépendances HIGH/CRITICAL | \\(.details.quality_breakdown.supply_chain // 0) / 5 |",
               "| Progression Kaizen | \(.breakdown.pente // 0) / 20 |",
               "| Résilience | \(.breakdown.resilience // 0) / 10 |",
               "| Régularité Heijunka | \(.breakdown.heijunka // 0) / 10 |",

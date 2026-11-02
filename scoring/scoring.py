@@ -7,7 +7,7 @@ Pour chaque équipe inscrite (issues du repo), interroge les APIs SonarCloud
 et GitHub, applique le barème officiel et produit data/leaderboard.json.
 
 Barème (cf. énoncé) :
-  A. Qualité finale (60) : gate 20 + maintenabilité 15 + sécurité 10 + couverture 10 + supply chain 5
+    A. Qualité finale (60) : gate 20 + maintenabilité 15 + sécurité 10 + couverture 10 + supply chain 5
   B. Kaizen (40) : pente 20 + résilience 10 + heijunka 10
   C. Bonus/malus : +5 / +3 / -5 / -10
 
@@ -40,6 +40,7 @@ import yaml
 
 GITHUB_API = "https://api.github.com"
 SONAR_API = "https://sonarcloud.io/api"
+SCORING_VERSION = 2
 logger = logging.getLogger(__name__)
 
 # Notes Sonar -> points
@@ -154,8 +155,8 @@ def fetch_quality_measures(team: Team, token: str) -> dict:
     r = sonar_get("/measures/component", token,
                   component=team.project_key, organization=team.sonar_org,
                   branch="main",
-                  metricKeys="reliability_rating,security_rating,sqale_rating,"
-                             "coverage,duplicated_lines_density")
+                  metricKeys="security_rating,sqale_rating,coverage,sqale_index,"
+                             "sqale_debt_ratio,code_smells")
     if r.status_code != 200:
         logger.warning("[%s] Mesures Sonar indisponibles : HTTP %s", team.repo_full, r.status_code)
         return {}
@@ -234,6 +235,55 @@ def heijunka_score(commit_times: list[datetime]) -> float:
     return round(10 * entropy / max_entropy, 2)
 
 
+def sonar_rating_letter(value) -> Optional[str]:
+    """Normalise un rating SonarCloud (A-E ou valeur API 1.0-5.0)."""
+    if value is None:
+        return None
+    text = str(value).strip().upper()
+    if text in {"A", "B", "C", "D", "E"}:
+        return text
+    try:
+        numeric_rating = float(text)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if not numeric_rating.is_integer():
+        return None
+    rating = int(numeric_rating)
+    return {1: "A", 2: "B", 3: "C", 4: "D", 5: "E"}.get(rating)
+
+
+def numeric_measure(value) -> Optional[float]:
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def quality_breakdown(measures: dict, gate_current: bool,
+                      crit: int, high: int) -> dict:
+    maintainability_rating = sonar_rating_letter(
+        measures.get("sqale_rating") or measures.get("maintainability_rating")
+    )
+    security_rating = sonar_rating_letter(measures.get("security_rating"))
+    coverage = numeric_measure(measures.get("coverage"))
+    coverage_points = (round(min(max(coverage / COVERAGE_TARGET, 0), 1) * 10, 2)
+                       if coverage is not None else 0)
+    return {
+        "gate": 20 if gate_current else 0,
+        "maintainability": MAINTENABILITY_POINTS.get(maintainability_rating, 0),
+        "maintainability_rating": maintainability_rating,
+        "security": SECURITY_POINTS.get(security_rating, 0),
+        "security_rating": security_rating,
+        "coverage": coverage_points,
+        "coverage_percent": coverage,
+        "technical_debt_minutes": numeric_measure(measures.get("sqale_index")),
+        "technical_debt_ratio_percent": numeric_measure(measures.get("sqale_debt_ratio")),
+        "code_smells": numeric_measure(measures.get("code_smells")),
+        "supply_chain": 5 if crit == 0 and high == 0 else 0,
+    }
+
+
 def score_team(team: Team, cfg) -> tuple[Score, dict]:
     logger.info("Debut scoring : %s | https://github.com/%s | projet Sonar=%s | org=%s",
                 team.name, team.repo_full, team.project_key, team.sonar_org)
@@ -248,18 +298,15 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
     # --- A. Qualité finale (60) --------------------------------------
     measures = fetch_quality_measures(team, cfg.sonar_token)
     gate_current = fetch_gate_current(team, cfg.sonar_token)
-    if gate_current:
-        s.quality += 20
-    s.quality += MAINTENABILITY_POINTS.get(measures.get("sqale_rating"), 0)
-    s.quality += SECURITY_POINTS.get(measures.get("security_rating"), 0)
-    coverage = float(measures.get("coverage") or 0)
-    s.quality += round(min(coverage / COVERAGE_TARGET, 1.0) * 10, 2)
+    tests = fetch_test_result(team, cfg.gh_token)
     # Supply chain (5) : lu depuis l'artefact Trivy du dernier run
     crit, high = fetch_dependency_vulns(team, cfg.gh_token)
-    if crit == 0 and high == 0:
-        s.quality += 5
-    logger.info("[%s] Qualite=%s/60 | mesures=%s | Trivy CRITICAL=%s HIGH=%s",
-                team.repo_full, s.quality, measures, crit, high)
+    quality = quality_breakdown(measures, gate_current, crit, high)
+    s.quality = round(sum(quality[key] for key in
+                          ("gate", "maintainability", "security", "coverage", "supply_chain")), 2)
+    quality["total"] = s.quality
+    logger.info("[%s] Qualite=%s/60 | détail=%s | tests CI=%s | Trivy CRITICAL=%s HIGH=%s",
+                team.repo_full, s.quality, quality, tests["status"], crit, high)
 
     # --- B. Kaizen (40) ----------------------------------------------
     history = fetch_scan_history(team, cfg.sonar_token, cfg.window_start)
@@ -267,7 +314,8 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
     # Pente (20) : trajectoire de la composante qualité depuis le début de
     # la nuit. scores-history.json archive un snapshot complet par batch
     # (ts + tous les sous-scores) -> sert aussi au graphique de progression.
-    archive = cfg.history_archive.get(team.name, [])
+    archive = [snapshot for snapshot in cfg.history_archive.get(team.name, [])
+               if snapshot.get("scoring_version") == SCORING_VERSION]
     if archive:
         first = archive[0]["qualite"]
         s.pente = round(max((s.quality - first) / 30 * 20, 0), 2)
@@ -311,8 +359,49 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
 
     return s, {"measures": measures, "commits": len(commits),
                "recoveries": recoveries, "identity": ident,
+               "tests": tests, "quality_breakdown": quality,
                "supply_chain": {"critical": crit, "high": high},
                "scans": len(history)}
+
+
+def fetch_test_result(team: Team, token: str) -> dict:
+    """Lit le résultat Python/Java/Node du dernier run terminé sur main."""
+    unavailable = {"status": "unavailable", "detected": 0, "failed": 0,
+                   "frameworks": ""}
+    try:
+        runs = [run for run in fetch_workflow_runs(team, token)
+                if run.get("head_branch") == "main"]
+        if not runs:
+            return unavailable
+        latest = max(runs, key=lambda run: run["created_at"])
+        response = gh_get(
+            f"{GITHUB_API}/repos/{team.repo_full}/actions/runs/{latest['id']}/artifacts",
+            token, per_page=100,
+        )
+        response.raise_for_status()
+        artifact = next((entry for entry in response.json().get("artifacts", [])
+                         if entry.get("name") == "test-results"
+                         and not entry.get("expired", False)), None)
+        if artifact is None:
+            return unavailable
+        response = gh_get(
+            f"{GITHUB_API}/repos/{team.repo_full}/actions/artifacts/{artifact['id']}/zip",
+            token,
+        )
+        response.raise_for_status()
+        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+            result = json.loads(archive.read("test-results.json"))
+        if result.get("status") not in {"passed", "failed", "not_found"}:
+            return unavailable
+        return {"status": result["status"],
+                "detected": int(result.get("detected", 0)),
+                "failed": int(result.get("failed", 0)),
+                "frameworks": str(result.get("frameworks", ""))}
+    except (requests.RequestException, zipfile.BadZipFile, KeyError,
+            ValueError, TypeError, AttributeError) as error:
+        logger.warning("[%s] Résultat des tests indisponible : %s",
+                       team.repo_full, type(error).__name__)
+        return unavailable
 
 
 def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
@@ -421,6 +510,7 @@ def main() -> None:
             if "error" not in details:
                 snapshot = {
                     "ts": datetime.now(timezone.utc).isoformat(),
+                    "scoring_version": SCORING_VERSION,
                     "total": score.total,
                     "qualite": score.quality,
                     "pente": score.pente,

@@ -28,7 +28,7 @@ Vous n'allez pas seulement développer une application. Vous allez construire un
 1. Créez un **repository GitHub public** pour votre projet d'équipe.
 2. Ajoutez le fichier d'appel du workflow Toyota **sans le modifier** (template fourni, 3 lignes, `uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1`).
 3. Ouvrez une **issue d'inscription** sur notre repo du défi avec le template prévu (nom d'équipe + URL du repo).
-4. À chaque push sur `main`, notre usine mesure automatiquement votre qualité : SonarCloud (gate, maintenabilité, sécurité, couverture) + audit des dépendances.
+4. À chaque push sur `main`, notre usine exécute les tests déclarés (Java/Maven ou Gradle, Python/pytest, Node.js), puis mesure la qualité avec SonarCloud (gate, maintenabilité, sécurité, couverture) et audite les dépendances. Les tests exécutés servent de garde-fou CI; les points de couverture proviennent de SonarCloud.
 5. Suivez le [**leaderboard en direct**](https://haingue.github.io/nuitdelinfo2026/) (mis à jour toutes les 15 minutes) sur la page du défi.
 
 ---
@@ -44,6 +44,8 @@ Vous n'allez pas seulement développer une application. Vous allez construire un
 | Note de sécurité (A = 10, B = 6, C = 3, D/E = 0)             | 10     |
 | Couverture de tests (≥ 60 % = 10 pts, sinon proportionnelle) | 10     |
 | Zéro vulnérabilité critique ou haute dans les dépendances    | 5      |
+
+La note de maintenabilité est calculée depuis le rating SonarCloud (`sqale_rating`, dérivé de la dette technique) : A = 15, B = 10, C = 5, D/E = 0. Le calculateur normalise les valeurs Sonar `1.0` à `5.0` (respectivement A à E). La dette technique, son ratio et les code smells sont également affichés dans le détail qualité. La couverture Sonar est proportionnelle jusqu'à 60 %; les tests exécutés par la CI ne donnent pas de points supplémentaires.
 
 ### B. Kaizen — votre trajectoire — 40 pts
 
@@ -87,12 +89,12 @@ Votre workflow d'appel lance un scan SonarCloud à chaque push. Celui-ci s'authe
 
 1. Créez un compte sur [sonarcloud.io](https://sonarcloud.io) avec votre compte GitHub.
 2. ⚠️ **Une seule personne par équipe fait ceci : le PROPRIÉTAIRE du repository** (celui ou celle qui l'a créé). Dans SonarCloud, choisissez **« Import repository from GitHub »** et sélectionnez votre repo. Notez la **clé de votre organisation** : elle apparaît dans l'URL (`sonarcloud.io/VOTRE-CLE`). ⚠️ **Ce n'est pas forcément votre login GitHub** (SonarCloud peut utiliser votre display name) — reportez la valeur exacte de l'URL dans votre issue d'inscription.
-3. Générez un token : *Mon compte → Sécurité → Generate token* (droits : *Analyze projects*).
-4. Ajoutez-le comme secret dans votre repo GitHub : *Settings → Secrets and variables → Actions → New repository secret*, nommé **`SONAR_TOKEN`**. Ne le partagez jamais, ne le committez jamais.
+3. Générez un token : _Mon compte → Sécurité → Generate token_ (droits : _Analyze projects_).
+4. Ajoutez-le comme secret dans votre repo GitHub : _Settings → Secrets and variables → Actions → New repository secret_, nommé **`SONAR_TOKEN`**. Ne le partagez jamais, ne le committez jamais.
 
 > 💡 Vous n'avez **rien d'autre à configurer** : la clé de projet et les exclusions de scan sont déduites automatiquement par le workflow Toyota ; votre organisation SonarCloud est celle déclarée à l'inscription. Votre token ne sert qu'à authentifier le scan de **votre** repository.
 >
-> 👥 **Travail en équipe** : les autres membres ne créent ni repo ni organisation SonarCloud — ils sont ajoutés en **collaborateurs** du repo GitHub (*Settings → Collaborators*) et poussent normalement. Le scoring analyse le repo et les commits de **toute** l'équipe.
+> 👥 **Travail en équipe** : les autres membres ne créent ni repo ni organisation SonarCloud — ils sont ajoutés en **collaborateurs** du repo GitHub (_Settings → Collaborators_) et poussent normalement. Le scoring analyse le repo et les commits de **toute** l'équipe.
 
 ---
 

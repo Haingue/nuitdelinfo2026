@@ -4,6 +4,28 @@
     "rank": 1,
     "score": 53.5,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "passed",
+        "detected": 12,
+        "failed": 0,
+        "frameworks": "JUnit 5 (Gradle)"
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 3,
+        "security_rating": "C",
+        "coverage": 5,
+        "coverage_percent": 30,
+        "technical_debt_minutes": 240,
+        "technical_debt_ratio_percent": 4,
+        "code_smells": 12,
+        "supply_chain": 0,
+        "total": 33
+      }
+    },
     "breakdown": {
       "qualite": 33,
       "pente": 5,
@@ -17,6 +39,28 @@
     "rank": 2,
     "score": 51,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "failed",
+        "detected": 3,
+        "failed": 3,
+        "frameworks": "pytest"
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 6,
+        "security_rating": "B",
+        "coverage": 0,
+        "coverage_percent": 0,
+        "technical_debt_minutes": 300,
+        "technical_debt_ratio_percent": 5,
+        "code_smells": 16,
+        "supply_chain": 0,
+        "total": 31
+      }
+    },
     "breakdown": {
       "qualite": 31,
       "pente": 5,
@@ -30,6 +74,28 @@
     "rank": 3,
     "score": 49.5,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 0,
+        "coverage_percent": 0,
+        "technical_debt_minutes": 420,
+        "technical_debt_ratio_percent": 7,
+        "code_smells": 21,
+        "supply_chain": 5,
+        "total": 30
+      }
+    },
     "breakdown": {
       "qualite": 30,
       "pente": 4.5,
@@ -43,6 +109,28 @@
     "rank": 4,
     "score": 49,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 5,
+        "coverage_percent": 30,
+        "technical_debt_minutes": 400,
+        "technical_debt_ratio_percent": 6.7,
+        "code_smells": 19,
+        "supply_chain": 0,
+        "total": 30
+      }
+    },
     "breakdown": {
       "qualite": 30,
       "pente": 6,
@@ -56,6 +144,28 @@
     "rank": 5,
     "score": 47.5,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 4,
+        "coverage_percent": 24,
+        "technical_debt_minutes": 450,
+        "technical_debt_ratio_percent": 7.5,
+        "code_smells": 23,
+        "supply_chain": 0,
+        "total": 29
+      }
+    },
     "breakdown": {
       "qualite": 29,
       "pente": 5,
@@ -69,6 +179,28 @@
     "rank": 6,
     "score": 45.5,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 3,
+        "coverage_percent": 18,
+        "technical_debt_minutes": 480,
+        "technical_debt_ratio_percent": 8,
+        "code_smells": 25,
+        "supply_chain": 0,
+        "total": 28
+      }
+    },
     "breakdown": {
       "qualite": 28,
       "pente": 5,
@@ -82,6 +214,28 @@
     "rank": 7,
     "score": 44,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 2,
+        "coverage_percent": 12,
+        "technical_debt_minutes": 480,
+        "technical_debt_ratio_percent": 8,
+        "code_smells": 25,
+        "supply_chain": 0,
+        "total": 27
+      }
+    },
     "breakdown": {
       "qualite": 27,
       "pente": 5,
@@ -95,6 +249,28 @@
     "rank": 7,
     "score": 44,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 2,
+        "coverage_percent": 12,
+        "technical_debt_minutes": 540,
+        "technical_debt_ratio_percent": 9,
+        "code_smells": 28,
+        "supply_chain": 0,
+        "total": 27
+      }
+    },
     "breakdown": {
       "qualite": 27,
       "pente": 4,
@@ -108,6 +284,28 @@
     "rank": 9,
     "score": 41,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 0,
+        "coverage_percent": 0,
+        "technical_debt_minutes": 510,
+        "technical_debt_ratio_percent": 8.5,
+        "code_smells": 26,
+        "supply_chain": 0,
+        "total": 25
+      }
+    },
     "breakdown": {
       "qualite": 25,
       "pente": 4,
@@ -121,6 +319,28 @@
     "rank": 9,
     "score": 41,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 1,
+        "coverage_percent": 6,
+        "technical_debt_minutes": 540,
+        "technical_debt_ratio_percent": 9,
+        "code_smells": 28,
+        "supply_chain": 0,
+        "total": 26
+      }
+    },
     "breakdown": {
       "qualite": 26,
       "pente": 4,
@@ -134,6 +354,28 @@
     "rank": 11,
     "score": 39,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 0,
+        "maintainability_rating": "D",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 5,
+        "coverage_percent": 30,
+        "technical_debt_minutes": 720,
+        "technical_debt_ratio_percent": 12,
+        "code_smells": 35,
+        "supply_chain": 0,
+        "total": 25
+      }
+    },
     "breakdown": {
       "qualite": 25,
       "pente": 4,
@@ -147,6 +389,28 @@
     "rank": 11,
     "score": 39,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 20,
+        "maintainability": 0,
+        "maintainability_rating": "D",
+        "security": 0,
+        "security_rating": "E",
+        "coverage": 3,
+        "coverage_percent": 18,
+        "technical_debt_minutes": 900,
+        "technical_debt_ratio_percent": 15,
+        "code_smells": 48,
+        "supply_chain": 0,
+        "total": 23
+      }
+    },
     "breakdown": {
       "qualite": 23,
       "pente": 4,
@@ -160,6 +424,28 @@
     "rank": 13,
     "score": 21,
     "eligible": true,
+    "details": {
+      "tests": {
+        "status": "not_found",
+        "detected": 0,
+        "failed": 0,
+        "frameworks": ""
+      },
+      "quality_breakdown": {
+        "gate": 0,
+        "maintainability": 5,
+        "maintainability_rating": "C",
+        "security": 3,
+        "security_rating": "C",
+        "coverage": 1,
+        "coverage_percent": 6,
+        "technical_debt_minutes": 900,
+        "technical_debt_ratio_percent": 15,
+        "code_smells": 48,
+        "supply_chain": 5,
+        "total": 14
+      }
+    },
     "breakdown": {
       "qualite": 14,
       "pente": 2.5,
