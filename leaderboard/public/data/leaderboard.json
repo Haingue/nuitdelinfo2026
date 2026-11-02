@@ -6,10 +6,11 @@
     "eligible": true,
     "details": {
       "tests": {
-        "status": "passed",
+        "status": "failed",
         "detected": 12,
-        "failed": 0,
-        "frameworks": "JUnit 5 (Gradle)"
+        "failed": 1,
+        "failed_tests": 3,
+        "frameworks": "Spring Boot · Maven"
       },
       "quality_breakdown": {
         "gate": 20,
@@ -44,6 +45,7 @@
         "status": "failed",
         "detected": 3,
         "failed": 3,
+        "failed_tests": 3,
         "frameworks": "pytest"
       },
       "quality_breakdown": {

@@ -114,6 +114,8 @@ export default function TeamDetail({ team, history, onClose }) {
                 {testStatusLabels[team.details.tests.status] ??
                   team.details.tests.status}
               </span>
+              {team.details.tests.failed_tests > 0 &&
+                ` · ${team.details.tests.failed_tests} test(s) en échec`}
               {team.details.tests.frameworks &&
                 ` · ${team.details.tests.frameworks}`}
             </p>

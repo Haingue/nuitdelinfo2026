@@ -129,8 +129,10 @@ class TestSuiteResultsTests(unittest.TestCase):
         self.assertEqual(result['detected'], 2)
 
     def test_reads_failed_test_artifact(self):
-        result = self.fetch({'status': 'failed', 'detected': 1, 'failed': 1})
+        result = self.fetch({'status': 'failed', 'detected': 1, 'failed': 1,
+                             'failed_tests': 3})
         self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['failed_tests'], 3)
 
     def test_missing_artifact_is_unavailable(self):
         listing = Mock()

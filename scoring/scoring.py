@@ -367,7 +367,7 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
 def fetch_test_result(team: Team, token: str) -> dict:
     """Lit le résultat Python/Java/Node du dernier run terminé sur main."""
     unavailable = {"status": "unavailable", "detected": 0, "failed": 0,
-                   "frameworks": ""}
+                   "failed_tests": 0, "frameworks": ""}
     try:
         runs = [run for run in fetch_workflow_runs(team, token)
                 if run.get("head_branch") == "main"]
@@ -396,6 +396,7 @@ def fetch_test_result(team: Team, token: str) -> dict:
         return {"status": result["status"],
                 "detected": int(result.get("detected", 0)),
                 "failed": int(result.get("failed", 0)),
+                "failed_tests": int(result.get("failed_tests", 0)),
                 "frameworks": str(result.get("frameworks", ""))}
     except (requests.RequestException, zipfile.BadZipFile, KeyError,
             ValueError, TypeError, AttributeError) as error:

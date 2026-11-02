@@ -52,7 +52,13 @@ const SAMPLE_LEADERBOARD = [
       bonus_malus: 3,
     },
     details: {
-      tests: { status: 'failed', detected: 3, failed: 3, frameworks: 'pytest' },
+      tests: {
+        status: 'failed',
+        detected: 1,
+        failed: 1,
+        failed_tests: 3,
+        frameworks: 'Spring Boot · Maven',
+      },
       quality_breakdown: {
         gate: 20,
         maintainability: 10,

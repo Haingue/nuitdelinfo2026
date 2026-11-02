@@ -210,6 +210,7 @@ jobs:
           set +e
           DETECTED=0
           FAILED=0
+          FAILED_TESTS=0
           FRAMEWORKS=""
 
           record_suite() {
@@ -266,7 +267,44 @@ jobs:
                 gradle test --no-daemon
               fi
             )
-            record_suite "Java ($(dirname "$JAVA_BUILD"))" "$?"
+            JAVA_RESULT=$?
+            JAVA_REPORT=$(python3 - <<'PY'
+          import glob
+          import json
+          import xml.etree.ElementTree as ET
+
+          patterns = (
+              '**/target/surefire-reports/TEST-*.xml',
+              '**/target/failsafe-reports/TEST-*.xml',
+              '**/build/test-results/test/TEST-*.xml',
+          )
+          paths = sorted({path for pattern in patterns for path in glob.glob(pattern, recursive=True)})
+          tests = failures = errors = 0
+          for path in paths:
+              try:
+                  root = ET.parse(path).getroot()
+                  tests += int(root.attrib.get('tests', 0))
+                  failures += int(root.attrib.get('failures', 0))
+                  errors += int(root.attrib.get('errors', 0))
+              except (ET.ParseError, OSError, ValueError):
+                  errors += 1
+          print(json.dumps({'reports': len(paths), 'tests': tests,
+                            'failures': failures, 'errors': errors}))
+          PY
+          )
+            JAVA_REPORT_ERROR=$?
+            if [ "$JAVA_REPORT_ERROR" -eq 0 ]; then
+              JAVA_REPORTS=$(jq -r '.reports' <<< "$JAVA_REPORT")
+              JAVA_FAILED_TESTS=$(jq -r '.failures + .errors' <<< "$JAVA_REPORT")
+              FAILED_TESTS=$((FAILED_TESTS + JAVA_FAILED_TESTS))
+              if [ "$JAVA_REPORTS" -eq 0 ] || [ "$JAVA_FAILED_TESTS" -gt 0 ]; then
+                JAVA_RESULT=1
+              fi
+              echo "Java reports: $(jq -r '.tests' <<< "$JAVA_REPORT") tests, $JAVA_FAILED_TESTS échec(s), $JAVA_REPORTS fichier(s) de rapport."
+            else
+              JAVA_RESULT=1
+            fi
+            record_suite "Java ($(dirname "$JAVA_BUILD"))" "$JAVA_RESULT"
           fi
 
           while IFS= read -r -d '' PACKAGE; do
@@ -292,7 +330,7 @@ jobs:
 
           if [ "$DETECTED" -eq 0 ]; then
             STATUS="not_found"
-            echo "::warning::Aucune suite Python ou script test Node détecté ; aucun point de test accordé."
+            echo "::warning::Aucune suite Java, Python ou Node détectée."
           elif [ "$FAILED" -gt 0 ]; then
             STATUS="failed"
             echo "::error::$FAILED suite(s) de tests en échec sur $DETECTED."
@@ -302,8 +340,9 @@ jobs:
           fi
 
           jq -n --arg status "$STATUS" --argjson detected "$DETECTED" \
-            --argjson failed "$FAILED" --arg frameworks "$FRAMEWORKS" \
-            '{status: $status, detected: $detected, failed: $failed, frameworks: $frameworks}' \
+            --argjson failed "$FAILED" --argjson failed_tests "$FAILED_TESTS" \
+            --arg frameworks "$FRAMEWORKS" \
+            '{status: $status, detected: $detected, failed: $failed, failed_tests: $failed_tests, frameworks: $frameworks}' \
             > test-results.json
           echo "status=$STATUS" >> "$GITHUB_OUTPUT"
           if [ "$STATUS" = "failed" ]; then exit 1; fi
