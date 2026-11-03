@@ -2,27 +2,27 @@
   {
     "team": "Le test de TMMF",
     "repo": "Haingue/test-nuitdelinfo2026",
-    "score": 28.55,
+    "score": 45.61,
     "breakdown": {
-      "qualite": 25.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.55,
+      "qualite": 33.77,
+      "pente": 5.85,
+      "resilience": 7.5,
+      "heijunka": 8.49,
       "bonus_malus": -10.0
     },
     "eligible": false,
-    "timestamp": "2026-11-02T22:22:26.157322+00:00",
+    "timestamp": "2026-11-03T01:17:29.561469+00:00",
     "details": {
       "measures": {
-        "coverage": "0.0",
+        "coverage": "52.6",
         "code_smells": "0",
         "security_rating": "1.0",
         "sqale_debt_ratio": "0.0",
         "sqale_index": "0",
         "sqale_rating": "1.0"
       },
-      "commits": 24,
-      "recoveries": 2,
+      "commits": 25,
+      "recoveries": 3,
       "identity": {
         "ok": true,
         "expected_hash": "934384f69d4163037c5f68087d2729567582fef78860be627aabf51c141f7f5d",
@@ -30,10 +30,10 @@
         "created_at": "2026-10-29T23:54:25Z"
       },
       "tests": {
-        "status": "failed",
+        "status": "passed",
         "detected": 1,
-        "failed": 1,
-        "failed_tests": 3,
+        "failed": 0,
+        "failed_tests": 0,
         "frameworks": "Java (.)"
       },
       "quality_breakdown": {
@@ -42,13 +42,13 @@
         "maintainability_rating": "A",
         "security": 10,
         "security_rating": "A",
-        "coverage": 0.0,
-        "coverage_percent": 0.0,
+        "coverage": 8.77,
+        "coverage_percent": 52.6,
         "technical_debt_minutes": 0.0,
         "technical_debt_ratio_percent": 0.0,
         "code_smells": 0.0,
         "supply_chain": 0,
-        "total": 25.0
+        "total": 33.77
       },
       "supply_chain": {
         "critical": -1,
