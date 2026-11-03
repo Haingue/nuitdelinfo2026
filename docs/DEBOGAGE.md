@@ -39,7 +39,7 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 
 ### ❌ `Le repository doit être public`
 
-- **À faire** : Settings → General → tout en bas, *Danger Zone* → *Change visibility* → Public. Relancez ensuite le workflow (onglet Actions → sélectionnez la run → *Re-run all jobs*).
+- **À faire** : Settings → General → tout en bas, _Danger Zone_ → _Change visibility_ → Public. Relancez ensuite le workflow (onglet Actions → sélectionnez la run → _Re-run all jobs_).
 
 ---
 
@@ -48,7 +48,7 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 ### ❌ Échec du step « Scanner le projet » avec `Authentication failed` / `401`
 
 - **Cause** : le secret `SONAR_TOKEN` est absent, expiré, ou n'a pas les droits sur le projet.
-- **À faire** : sur sonarcloud.io → *Mon compte → Sécurité* → générez un token (*Analyze projects*) → dans votre repo GitHub : Settings → Secrets and variables → Actions → New repository secret → nom **`SONAR_TOKEN`** (exactement, en majuscules). Relancez.
+- **À faire** : sur sonarcloud.io → _Mon compte → Sécurité_ → générez un token (_Analyze projects_) → dans votre repo GitHub : Settings → Secrets and variables → Actions → New repository secret → nom **`SONAR_TOKEN`** (exactement, en majuscules). Relancez.
 
 ### ❌ `You are running CI analysis while Automatic Analysis is enabled`
 
@@ -63,7 +63,7 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 
 ### ❌ Échec du step « Vérifier le Quality Gate »
 
-- **Ce n'est PAS une erreur de configuration** : c'est le fonctionnement voulu (*Jidoka* — la ligne s'arrête quand il y a un défaut). Le Quality Gate Sonar est rouge tant que qualité, couverture ou sécurité ne passent pas les seuils.
+- **Ce n'est PAS une erreur de configuration** : c'est le fonctionnement voulu (_Jidoka_ — la ligne s'arrête quand il y a un défaut). Le Quality Gate Sonar est rouge tant que qualité, couverture ou sécurité ne passent pas les seuils.
 - **À faire** : ouvrez votre projet sur sonarcloud.io → consultez quelles **conditions du gate** échouent (bugs, coverage, duplications…) → corrigez, pushez : le gate repasse vert et la run redevient verte.
 - ⚠️ Rappel : un gate rouge à la fin de la nuit = **−10 points** et inéligibilité. Corrigez vite !
 
@@ -71,11 +71,13 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 
 ## 3. Job « Supply chain — audit dépendances » (Trivy)
 
-### ❌ `remote Maven repository returned 429 Too Many Requests ... Retry-After: 1800`
+### ⚠️ `[pom] Dependency version cannot be determined. Child dependencies will not be found.`
 
-**Cause** : Trivy tente de résoudre l'arbre transitif de vos dépendances en interrogeant Maven Central. Les runners GitHub Actions partagent des IPs, très largement rate-limitées — surtout pendant la Nuit de l'Info. Ce n'est **pas un problème dans votre repo**.
+Le scan Trivy a démarré, mais certaines versions Maven restent inconnues : les dépendances transitives de ces entrées ne seront pas analysées. Le workflow tente d'abord de pré-résoudre le modèle Maven et ses dépendances pour que Trivy les trouve dans le cache local. Une erreur Maven Central `429 Too Many Requests`, un parent POM inaccessible ou une version définie par une propriété non résolue peut encore laisser l'inventaire incomplet.
 
-**Correction** : rien à faire — le workflow Toyota scanne en mode *offline* (`--offline-scan`), qui interdit tout appel réseau vers les registres distants. Si vous voyez encore cette erreur, vérifiez que votre fichier d'appel est bien à jour (régénérez-le depuis l'issue d'entraide si besoin). Trivy analyse quand même vos `pom.xml`, `package-lock.json`, `requirements.txt` locaux : seules les dépendances transitives non déclarées dans ces fichiers peuvent être manquées.
+Le job affiche alors `versions manquantes` dans son résumé. Le calcul du score traite un rapport avec des dépendances sans version comme incomplet : il ne crédite pas les 5 points supply chain. Le scanner ne fonctionne pas en mode hors-ligne; la base de vulnérabilités Trivy et, si nécessaire, les métadonnées Maven sont téléchargées.
+
+Trivy en mode `fs` vérifie les dépendances/manifests pour les CVE et recherche les secrets dans les fichiers du dépôt. Ce n'est pas une analyse statique complète du code (SAST); les bugs et défauts de code sont couverts par SonarCloud.
 
 ## 4. Le workflow ne démarre pas du tout
 
