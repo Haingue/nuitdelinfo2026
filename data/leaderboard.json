@@ -2,16 +2,16 @@
   {
     "team": "Le test de TMMF",
     "repo": "Haingue/test-nuitdelinfo2026",
-    "score": 45.61,
+    "score": 48.11,
     "breakdown": {
       "qualite": 33.77,
       "pente": 5.85,
-      "resilience": 7.5,
+      "resilience": 10.0,
       "heijunka": 8.49,
       "bonus_malus": -10.0
     },
     "eligible": false,
-    "timestamp": "2026-11-03T16:25:54.875237+00:00",
+    "timestamp": "2026-11-03T21:38:53.486113+00:00",
     "details": {
       "measures": {
         "coverage": "52.6",
@@ -22,7 +22,7 @@
         "sqale_rating": "1.0"
       },
       "commits": 25,
-      "recoveries": 3,
+      "recoveries": 4,
       "identity": {
         "ok": true,
         "expected_hash": "934384f69d4163037c5f68087d2729567582fef78860be627aabf51c141f7f5d",
@@ -51,8 +51,8 @@
         "total": 33.77
       },
       "supply_chain": {
-        "critical": -1,
-        "high": -1
+        "critical": 8,
+        "high": 27
       },
       "scans": 0
     },
