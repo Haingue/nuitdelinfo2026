@@ -557,27 +557,29 @@ jobs:
         with:
           scan-type: fs
           scan-ref: .
+          scanners: vuln
           severity: HIGH,CRITICAL
           format: json
           output: trivy-report.json
-          exit-code: '0' # on ne bloque pas : le score en tiendra compte
-        env:
-          TRIVY_OFFLINE_SCAN: 'true'
+          exit-code: '0'
 
       - name: Extraire les métriques supply chain
         id: metrics
         run: |
-          CRIT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json | paste -sd+ | bc)
-          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json | paste -sd+ | bc)
-          echo "critical=${CRIT:-0}" >> "$GITHUB_OUTPUT"
-          echo "high=${HIGH:-0}" >> "$GITHUB_OUTPUT"
-          echo "::notice::CRIT=${CRIT:-0} HIGH=${HIGH:-0}"
+          if [ ! -s trivy-report.json ] || ! jq -e 'type == "object" and (.Results | type == "array")' trivy-report.json >/dev/null; then
+            echo "::error::Rapport Trivy absent ou invalide; impossible de confirmer l'état des dépendances."
+            exit 1
+          fi
+          CRIT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json)
+          echo "critical=$CRIT" >> "$GITHUB_OUTPUT"
+          echo "high=$HIGH" >> "$GITHUB_OUTPUT"
+          echo "::notice::Trivy terminé avec la base de vulnérabilités à jour : CRIT=$CRIT HIGH=$HIGH"
 
       - uses: actions/upload-artifact@v4
         with:
           name: trivy-report
           path: trivy-report.json
-          # lu par fetch_dependency_vulns côté batch (5 pts supply chain)
 
   # ------------------------------------------------------------------
   # 4. Heijunka — régularité des commits sur la nuit.
