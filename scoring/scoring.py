@@ -143,8 +143,8 @@ def check_identity(team: Team, token: str, salt: str) -> dict:
 # Données qualité : SonarCloud
 # ----------------------------------------------------------------------
 def fetch_gate_current(team: Team, token: str) -> bool:
-    r = sonar_get("/quality_gates/project_status", token,
-                  project=team.project_key, organization=team.sonar_org,
+    r = sonar_get("/qualitygates/project_status", token,
+                  projectKey=team.project_key, organization=team.sonar_org,
                   branch="main")
     status = r.json().get("projectStatus", {}).get("status")
     logger.info("[%s] Quality Gate : %s", team.repo_full, status or "indisponible")
