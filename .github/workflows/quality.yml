@@ -360,33 +360,69 @@ jobs:
             FRAMEWORKS="${FRAMEWORKS:+$FRAMEWORKS, }$LABEL"
             if [ "$RESULT" -ne 0 ]; then
               FAILED=$((FAILED + 1))
+              echo "::error title=Suite en échec::$LABEL (code de sortie $RESULT)"
+            else
+              echo "::notice title=Suite réussie::$LABEL"
             fi
           }
 
-          PYTHON_TEST=$(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv \) -prune -o \
-            -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print -quit)
-          if [ -n "$PYTHON_TEST" ]; then
-            REQUIREMENTS=$(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv \) -prune -o \
-              -type f -name requirements.txt -print -quit)
-            if [ -n "$REQUIREMENTS" ]; then
-              python -m pip install -r "$REQUIREMENTS"
-              INSTALL_RESULT=$?
-            else
+          PYTHON_PROJECTS=$(python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          ignored = {'.git', 'node_modules', '.venv', 'venv', '__pycache__', 'build', 'dist'}
+          markers = {'pyproject.toml', 'setup.py', 'setup.cfg', 'Pipfile', 'poetry.lock', 'uv.lock'}
+          roots = set()
+          for current, directories, files in os.walk('.'):
+              directories[:] = [directory for directory in directories if directory not in ignored]
+              tests = [name for name in files
+                       if (name.startswith('test_') and name.endswith('.py'))
+                       or name.endswith('_test.py')]
+              if not tests:
+                  continue
+              test_directory = Path(current)
+              root = Path('.')
+              for candidate in (test_directory, *test_directory.parents):
+                  candidate_files = {path.name for path in candidate.iterdir() if path.is_file()}
+                  if markers.intersection(candidate_files) or any(
+                      name.startswith('requirements') and name.endswith('.txt')
+                      for name in candidate_files):
+                      root = candidate
+                      break
+                  if candidate == Path('.'):
+                      break
+              roots.add(os.path.relpath(root, Path.cwd()))
+          for root in sorted(roots):
+              print(root)
+          PY
+          )
+
+          while IFS= read -r PYTHON_DIR; do
+            [ -n "$PYTHON_DIR" ] || continue
+            PYTHON_PATH=${PYTHON_DIR#./}
+            PYTHON_KEY=$(printf '%s' "${PYTHON_PATH:-root}" | tr '/ ' '__')
+            PYTHON_COVERAGE_DIR="$GITHUB_WORKSPACE/coverage-artifacts/python/$PYTHON_KEY"
+            (
+              cd "$PYTHON_DIR" || exit 1
               INSTALL_RESULT=0
-            fi
-            if [ "$INSTALL_RESULT" -eq 0 ]; then
-              python -m pip install pytest pytest-cov
-              INSTALL_RESULT=$?
-            fi
-            if [ "$INSTALL_RESULT" -eq 0 ]; then
-              mkdir -p coverage-artifacts/python
-              python -m pytest -q --cov --cov-report=xml:coverage-artifacts/python/coverage.xml
-              TEST_RESULT=$?
-            else
-              TEST_RESULT=$INSTALL_RESULT
-            fi
-            record_suite "Python (pytest)" "$TEST_RESULT"
-          fi
+              while IFS= read -r REQUIREMENTS; do
+                python -m pip install --disable-pip-version-check -r "$REQUIREMENTS" || INSTALL_RESULT=$?
+              done < <(find . -maxdepth 1 -type f -name 'requirements*.txt' -print | sort)
+              if [ "$INSTALL_RESULT" -eq 0 ]; then
+                python -m pip install --disable-pip-version-check pytest pytest-cov || INSTALL_RESULT=$?
+              fi
+              if [ "$INSTALL_RESULT" -eq 0 ] && { [ -f pyproject.toml ] || [ -f setup.py ] || [ -f setup.cfg ]; }; then
+                python -m pip install --disable-pip-version-check -e . || INSTALL_RESULT=$?
+              fi
+              if [ "$INSTALL_RESULT" -eq 0 ]; then
+                mkdir -p "$PYTHON_COVERAGE_DIR"
+                python -m pytest -q --cov --cov-report=xml:"$PYTHON_COVERAGE_DIR/coverage.xml"
+              else
+                exit "$INSTALL_RESULT"
+              fi
+            )
+            record_suite "Python (pytest $PYTHON_DIR)" "$?"
+          done <<< "$PYTHON_PROJECTS"
 
           JAVA_PROJECTS=$(python3 - <<'PY'
           import os
@@ -569,11 +605,11 @@ jobs:
                 if [ "$?" -eq 0 ]; then
                   mkdir -p "$COVERAGE_DIR"
                   if [ -f pnpm-lock.yaml ]; then
-                    CI=true pnpm test -- --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportsDirectory="$COVERAGE_DIR"
+                    CI=true pnpm test -- --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportOnFailure --coverage.reportsDirectory="$COVERAGE_DIR"
                   elif [ -f yarn.lock ]; then
-                    CI=true yarn test --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportsDirectory="$COVERAGE_DIR"
+                    CI=true yarn test --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportOnFailure --coverage.reportsDirectory="$COVERAGE_DIR"
                   else
-                    CI=true npm test -- --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportsDirectory="$COVERAGE_DIR"
+                    CI=true npm test -- --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportOnFailure --coverage.reportsDirectory="$COVERAGE_DIR"
                   fi
                 else
                   echo "::warning::Vitest détecté dans $PACKAGE_DIR, mais aucun provider @vitest/coverage-v8 ou @vitest/coverage-istanbul n'est installé. Ajoutez @vitest/coverage-v8 à vos devDependencies pour publier la couverture Sonar."
