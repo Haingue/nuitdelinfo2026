@@ -171,6 +171,7 @@ def fetch_scan_history(team: Team, token: str,
     r = sonar_get("/ce/activity", token, component=team.project_key,
                   **{"from": fmt, "onlyCurrentBranch": "true"})
     if r.status_code != 200:
+        logger.warning("[%s] Historique Sonar indisponible : HTTP %s", team.repo_full, r.status_code)
         return []
     return sorted(
         datetime.fromisoformat(t["submittedAt"].replace("Z", "+00:00"))
