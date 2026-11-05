@@ -11,7 +11,7 @@
       "bonus_malus": 0.0
     },
     "eligible": true,
-    "timestamp": "2026-11-05T22:13:54.248159+00:00",
+    "timestamp": "2026-11-05T22:19:47.984869+00:00",
     "details": {
       "measures": {
         "coverage": "52.6",
@@ -26,7 +26,7 @@
       "recoveries": 4,
       "identity": {
         "ok": true,
-        "expected_hash": "ff94370a0951df810d7758415ad7563a8543a2184239ad6482f66facd1520cf0",
+        "expected_hash": "934384f69d4163037c5f68087d2729567582fef78860be627aabf51c141f7f5d",
         "repo_id": 1439081138,
         "created_at": "2026-10-29T23:54:25Z"
       },
