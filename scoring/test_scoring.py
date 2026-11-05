@@ -28,6 +28,22 @@ class LoggingTests(unittest.TestCase):
             self.assertNotIn(secret, output)
 
 
+class WindowStartTests(unittest.TestCase):
+    def test_requires_window_start(self):
+        with self.assertRaisesRegex(ValueError, 'WINDOW_START absent'):
+            scoring.parse_window_start(None)
+        with self.assertRaisesRegex(ValueError, 'WINDOW_START absent'):
+            scoring.parse_window_start('')
+
+    def test_requires_timezone(self):
+        with self.assertRaisesRegex(ValueError, 'fuseau horaire'):
+            scoring.parse_window_start('2026-11-05T20:00:00')
+
+    def test_parses_iso8601_window_start(self):
+        result = scoring.parse_window_start('2026-11-05T20:00:00+01:00')
+        self.assertEqual(result.isoformat(), '2026-11-05T20:00:00+01:00')
+
+
 class DependencyVulnsTests(unittest.TestCase):
     def setUp(self):
         self.team = scoring.Team('Test', 'owner/repo', 'org', 0)

@@ -181,6 +181,18 @@ def fetch_commits(team: Team, token: str, since: datetime) -> list[dict]:
     return commits
 
 
+def parse_window_start(value: Optional[str]) -> datetime:
+    if not value:
+        raise ValueError(
+            "WINDOW_START absent : définissez la variable de dépôt à la date/heure "
+            "de début du défi (ISO 8601 avec fuseau, par ex. 2026-11-05T20:00:00+01:00)."
+        )
+    window_start = datetime.fromisoformat(value)
+    if window_start.tzinfo is None:
+        raise ValueError("WINDOW_START doit inclure un fuseau horaire ISO 8601.")
+    return window_start
+
+
 def fetch_workflow_runs(team: Team, token: str) -> list[dict]:
     """Runs du workflow d'appel : base de la résilience Jidoka."""
     r = gh_get(f"{GITHUB_API}/repos/{team.repo_full}/actions/runs", token,
@@ -341,6 +353,7 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
                 s.heijunka, s.bonus, s.eligible, len(commits), MIN_COMMITS, gate_current)
 
     return s, {"measures": measures, "commits": len(commits),
+               "window_start": cfg.window_start.isoformat(),
                "recoveries": recoveries, "identity": ident,
                "tests": tests, "quality_breakdown": quality,
                "supply_chain": {"critical": crit, "high": high}}
@@ -462,16 +475,11 @@ def main() -> None:
     args = p.parse_args()
     logger.info("Batch demarre | depot du defi=https://github.com/%s/%s | cwd=%s",
                 args.org, args.repo, os.getcwd())
-    if not args.window_start:
-        logger.warning("WINDOW_START absent : la fenetre commence maintenant, les commits anterieurs ne seront pas comptes")
-
     cfg = argparse.Namespace(
         gh_token=os.environ["GITHUB_TOKEN"],
         sonar_token=os.environ["SONAR_TOKEN"],
         salt=os.environ["IDENTITY_SALT"],
-        window_start=datetime.fromisoformat(
-            args.window_start or datetime.now(timezone.utc).isoformat()
-        ),
+        window_start=parse_window_start(args.window_start),
         history_archive={},
     )
     logger.info("Debut de la fenetre de scoring : %s", cfg.window_start.isoformat())

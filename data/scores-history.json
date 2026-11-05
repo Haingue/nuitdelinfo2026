@@ -1,284 +1,31 @@
 {
   "Le test de TMMF": [
     {
-      "ts": "2026-10-30T16:47:40.830346+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-10-30T16:50:42.799184+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-10-30T18:00:08.067522+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-10-30T22:12:41.188389+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-10-31T01:37:18.214351+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-10-31T07:30:31.653494+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-10-31T13:54:12.233473+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-10-31T18:10:17.951156+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-10-31T21:33:00.003324+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-01T00:26:40.120092+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-01T06:38:08.512671+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-01T13:48:44.746544+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-01T18:44:35.895596+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-01T22:27:54.194462+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-02T01:43:15.333400+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-02T08:21:31.510891+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-02T18:40:48.323172+00:00",
-      "total": 3.58,
-      "qualite": 0.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.58,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-02T22:22:26.157307+00:00",
+      "ts": "2026-11-05T21:56:21.150739+00:00",
       "scoring_version": 2,
-      "total": 28.55,
-      "qualite": 25.0,
-      "pente": 0.0,
-      "resilience": 5.0,
-      "heijunka": 8.55,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-03T01:17:29.561450+00:00",
-      "scoring_version": 2,
-      "total": 45.61,
-      "qualite": 33.77,
-      "pente": 5.85,
-      "resilience": 7.5,
-      "heijunka": 8.49,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-03T08:18:05.204598+00:00",
-      "scoring_version": 2,
-      "total": 45.61,
-      "qualite": 33.77,
-      "pente": 5.85,
-      "resilience": 7.5,
-      "heijunka": 8.49,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-03T16:25:54.875222+00:00",
-      "scoring_version": 2,
-      "total": 45.61,
-      "qualite": 33.77,
-      "pente": 5.85,
-      "resilience": 7.5,
-      "heijunka": 8.49,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-03T21:38:53.486098+00:00",
-      "scoring_version": 2,
-      "total": 48.11,
-      "qualite": 33.77,
-      "pente": 5.85,
-      "resilience": 10.0,
-      "heijunka": 8.49,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-03T21:53:30.879097+00:00",
-      "scoring_version": 2,
-      "total": 48.11,
-      "qualite": 33.77,
-      "pente": 5.85,
-      "resilience": 10.0,
-      "heijunka": 8.49,
-      "bonus_malus": -10.0
-    },
-    {
-      "ts": "2026-11-04T01:53:24.969842+00:00",
-      "scoring_version": 2,
-      "total": 91.44,
+      "total": 63.77,
       "qualite": 53.77,
-      "pente": 19.18,
+      "pente": 0.0,
       "resilience": 10.0,
-      "heijunka": 8.49,
+      "heijunka": 0.0,
       "bonus_malus": 0.0
     },
     {
-      "ts": "2026-11-04T08:37:07.641889+00:00",
+      "ts": "2026-11-05T22:08:27.791869+00:00",
       "scoring_version": 2,
-      "total": 91.44,
+      "total": 63.77,
       "qualite": 53.77,
-      "pente": 19.18,
+      "pente": 0.0,
       "resilience": 10.0,
-      "heijunka": 8.49,
+      "heijunka": 0.0,
       "bonus_malus": 0.0
     },
     {
-      "ts": "2026-11-04T16:36:29.218333+00:00",
+      "ts": "2026-11-05T22:13:54.248047+00:00",
       "scoring_version": 2,
-      "total": 91.44,
+      "total": 72.26,
       "qualite": 53.77,
-      "pente": 19.18,
-      "resilience": 10.0,
-      "heijunka": 8.49,
-      "bonus_malus": 0.0
-    },
-    {
-      "ts": "2026-11-04T22:13:30.254412+00:00",
-      "scoring_version": 2,
-      "total": 91.44,
-      "qualite": 53.77,
-      "pente": 19.18,
-      "resilience": 10.0,
-      "heijunka": 8.49,
-      "bonus_malus": 0.0
-    },
-    {
-      "ts": "2026-11-05T02:30:09.147077+00:00",
-      "scoring_version": 2,
-      "total": 91.44,
-      "qualite": 53.77,
-      "pente": 19.18,
-      "resilience": 10.0,
-      "heijunka": 8.49,
-      "bonus_malus": 0.0
-    },
-    {
-      "ts": "2026-11-05T09:48:08.440243+00:00",
-      "scoring_version": 2,
-      "total": 91.44,
-      "qualite": 53.77,
-      "pente": 19.18,
-      "resilience": 10.0,
-      "heijunka": 8.49,
-      "bonus_malus": 0.0
-    },
-    {
-      "ts": "2026-11-05T17:50:49.419985+00:00",
-      "scoring_version": 2,
-      "total": 91.44,
-      "qualite": 53.77,
-      "pente": 19.18,
+      "pente": 0.0,
       "resilience": 10.0,
       "heijunka": 8.49,
       "bonus_malus": 0.0

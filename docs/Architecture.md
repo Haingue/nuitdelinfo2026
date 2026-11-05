@@ -71,7 +71,7 @@ Trois acteurs, deux repos, zéro serveur :
 | Multi-inscriptions / flood   | Unicité nom + repo dans le bot ; un fichier `teams/` par équipe ; `concurrency` sur le batch                                      | inscription.yml                  |
 | Contestation                 | Tout est commité et horodaté : inscriptions, fichiers d'équipe, chaque leaderboard, snapshots de scores                           | Git = audit trail                |
 
-**Secrets** (repo du défi) : `GH_PAT` (lecture API, attention aux rate limits), `SONAR_TOKEN` (SonarCloud, lecture), `IDENTITY_SALT` (sel de l'empreinte — ne vit **jamais** en CI côté équipes). **Variable** : `WINDOW_START` (ouverture de la nuit). **Labels** à créer : `inscription`, `inscrit ✅`.
+**Secrets** (repo du défi) : `GH_PAT` (lecture API, attention aux rate limits), `SONAR_TOKEN` (SonarCloud, lecture), `IDENTITY_SALT` (sel de l'empreinte — ne vit **jamais** en CI côté équipes). **Variable obligatoire** : `WINDOW_START`, à définir dans Settings → Secrets and variables → Actions → Variables du repo du défi, au début de la fenêtre d'évaluation. Format ISO 8601 avec fuseau, par exemple `2026-11-05T20:00:00+01:00`. Sans cette variable, le batch s'arrête au lieu de prendre l'heure courante et de publier zéro commit. **Labels** à créer : `inscription`, `inscrit ✅`.
 
 ## 6. Subtilités d'implémentation (les pièges rencontrés)
 
@@ -97,4 +97,4 @@ Trois acteurs, deux repos, zéro serveur :
 3. Pousser tous les workflows ; taguer le workflow qualité : `git tag -f v1 && git push -f origin v1`.
 4. Activer GitHub Pages (source : GitHub Actions).
 5. Test bout en bout avec un repo pilote (inscription réelle, push, batch manuel, vérification du leaderboard).
-6. Le jour J : régler `WINDOW_START` à l'ouverture ; surveiller les 403/429 dans les logs batch.
+6. Le jour J : régler `WINDOW_START` à l'ouverture avec son fuseau horaire ; surveiller les 403/429 dans les logs batch. La pente reste nulle tant que le score qualité n'a pas progressé par rapport au premier snapshot versionné de la fenêtre.
