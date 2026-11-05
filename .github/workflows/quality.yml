@@ -187,7 +187,7 @@ jobs:
             -Dsonar.exclusions="**/*.min.js,**/vendor/**,**/dist/**,**/node_modules/**" \
             -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**" \
             -Dsonar.coverage.jacoco.xmlReportPaths="coverage-artifacts/java/**/jacoco*.xml" \
-            -Dsonar.python.coverage.reportPaths="coverage-artifacts/python/coverage.xml" \
+            -Dsonar.python.coverage.reportPaths="coverage-artifacts/python/**/coverage.xml" \
             -Dsonar.javascript.lcov.reportPaths="coverage-artifacts/node/**/lcov.info" \
             -Dsonar.python.version=3.11
         env:
@@ -342,7 +342,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: '21'
 
       - name: Détecter et exécuter les suites Java/Python/Node
         id: run-tests
@@ -352,6 +352,7 @@ jobs:
           FAILED=0
           FAILED_TESTS=0
           FRAMEWORKS=""
+          SUITE_RESULTS='[]'
 
           record_suite() {
             LABEL="$1"
@@ -360,10 +361,15 @@ jobs:
             FRAMEWORKS="${FRAMEWORKS:+$FRAMEWORKS, }$LABEL"
             if [ "$RESULT" -ne 0 ]; then
               FAILED=$((FAILED + 1))
+              SUITE_STATUS="failed"
               echo "::error title=Suite en échec::$LABEL (code de sortie $RESULT)"
             else
+              SUITE_STATUS="passed"
               echo "::notice title=Suite réussie::$LABEL"
             fi
+            SUITE_RESULTS=$(jq -c --arg name "$LABEL" --arg status "$SUITE_STATUS" \
+              --argjson exit_code "$RESULT" '. + [{name: $name, status: $status, exit_code: $exit_code}]' \
+              <<< "$SUITE_RESULTS")
           }
 
           PYTHON_PROJECTS=$(python3 - <<'PY'
@@ -649,7 +655,8 @@ jobs:
           jq -n --arg status "$STATUS" --argjson detected "$DETECTED" \
             --argjson failed "$FAILED" --argjson failed_tests "$FAILED_TESTS" \
             --arg frameworks "$FRAMEWORKS" \
-            '{status: $status, detected: $detected, failed: $failed, failed_tests: $failed_tests, frameworks: $frameworks}' \
+            --argjson suites "$SUITE_RESULTS" \
+            '{status: $status, detected: $detected, failed: $failed, failed_tests: $failed_tests, frameworks: $frameworks, suites: $suites}' \
             > test-results.json
           echo "status=$STATUS" >> "$GITHUB_OUTPUT"
           if [ "$STATUS" = "failed" ]; then exit 1; fi
@@ -664,8 +671,8 @@ jobs:
             cp "$REPORT" "sonar-coverage/java/$RELATIVE"
           done < <(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv \) -prune -o \
             -type f \( -path '*/target/site/jacoco/jacoco.xml' -o -path '*/build/reports/jacoco/test/jacocoTestReport.xml' \) -print0)
-          if [ -s coverage-artifacts/python/coverage.xml ]; then
-            cp coverage-artifacts/python/coverage.xml sonar-coverage/python/coverage.xml
+          if [ -d coverage-artifacts/python ]; then
+            cp -R coverage-artifacts/python/. sonar-coverage/python/
           fi
           if [ -d coverage-artifacts/node ]; then
             cp -R coverage-artifacts/node/. sonar-coverage/node/
