@@ -165,7 +165,6 @@ class TestSuiteResultsTests(unittest.TestCase):
                     fetch_gate_current=Mock(return_value=True),
                     fetch_test_result=Mock(return_value=test_result),
                     fetch_dependency_vulns=Mock(return_value=(0, 0)),
-                    fetch_scan_history=Mock(return_value=[]),
                     fetch_workflow_runs=Mock(return_value=[]),
                     fetch_commits=Mock(return_value=[])):
                 score, details = scoring.score_team(self.team, cfg)

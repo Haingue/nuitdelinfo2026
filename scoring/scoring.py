@@ -164,22 +164,6 @@ def fetch_quality_measures(team: Team, token: str) -> dict:
             for m in r.json().get("component", {}).get("measures", [])}
 
 
-def fetch_scan_history(team: Team, token: str,
-                       window_start: datetime) -> list[datetime]:
-    """Historique des analyses Sonar de la nuit (API ce/activity, publique)."""
-    fmt = window_start.strftime("%Y-%m-%dT%H:%M%z")
-    r = sonar_get("/ce/activity", token, component=team.project_key,
-                  **{"from": fmt, "onlyCurrentBranch": "true"})
-    if r.status_code != 200:
-        logger.warning("[%s] Historique Sonar indisponible : HTTP %s", team.repo_full, r.status_code)
-        return []
-    return sorted(
-        datetime.fromisoformat(t["submittedAt"].replace("Z", "+00:00"))
-        for t in r.json().get("tasks", [])
-        if t.get("status") == "SUCCESS"
-    )
-
-
 # ----------------------------------------------------------------------
 # Données rythme : GitHub (commits + runs CI)
 # ----------------------------------------------------------------------
@@ -310,8 +294,6 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
                 team.repo_full, s.quality, quality, tests["status"], crit, high)
 
     # --- B. Kaizen (40) ----------------------------------------------
-    history = fetch_scan_history(team, cfg.sonar_token, cfg.window_start)
-
     # Pente (20) : trajectoire de la composante qualité depuis le début de
     # la nuit. scores-history.json archive un snapshot complet par batch
     # (ts + tous les sous-scores) -> sert aussi au graphique de progression.
@@ -337,9 +319,9 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
 
     # Heijunka (10)
     commits = fetch_commits(team, cfg.gh_token, cfg.window_start)
-    logger.info("[%s] Depuis %s : %s commits | %s analyses Sonar | %s runs CI examines | %s redressements | %s snapshots archives",
+    logger.info("[%s] Depuis %s : %s commits | %s runs CI examines | %s redressements | %s snapshots archives",
                 team.repo_full, cfg.window_start.isoformat(), len(commits),
-                len(history), len(runs), recoveries, len(archive))
+                len(runs), recoveries, len(archive))
     times = [datetime.fromisoformat(c["commit"]["author"]["date"].replace("Z", "+00:00"))
              for c in commits]
     s.heijunka = heijunka_score(times)
@@ -361,8 +343,7 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
     return s, {"measures": measures, "commits": len(commits),
                "recoveries": recoveries, "identity": ident,
                "tests": tests, "quality_breakdown": quality,
-               "supply_chain": {"critical": crit, "high": high},
-               "scans": len(history)}
+               "supply_chain": {"critical": crit, "high": high}}
 
 
 def fetch_test_result(team: Team, token: str) -> dict:
