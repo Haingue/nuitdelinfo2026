@@ -18,6 +18,7 @@ Variables d'environnement :
   SONAR_TOKEN    : token SonarCloud lecture
   IDENTITY_SALT  : sel secret de l'empreinte d'identité
   WINDOW_START   : ISO datetime d'ouverture de la nuit (optionnel)
+  SCORING_LOG_LEVEL : INFO par défaut, DEBUG pour les détails techniques
 """
 
 import argparse
@@ -50,13 +51,24 @@ COVERAGE_TARGET = 60.0          # % pour les 10 pts (proportionnel en dessous)
 MIN_COMMITS = 20                # seuil d'éligibilité trajectoire
 
 
+def configure_logging() -> None:
+    level_name = os.environ.get("SCORING_LOG_LEVEL", "INFO").upper()
+    level = getattr(logging, level_name, None)
+    if not isinstance(level, int):
+        raise ValueError(
+            f"SCORING_LOG_LEVEL invalide : {level_name}; utilisez INFO ou DEBUG."
+        )
+    logging.basicConfig(level=level,
+                        format="%(asctime)s %(levelname)s %(message)s")
+
+
 def gh_get(url: str, token: str, **params) -> requests.Response:
-    logger.info("GitHub GET %s params=%s", url, params)
+    logger.debug("GitHub GET %s params=%s", url, params)
     r = requests.get(url, headers={
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
     }, params=params, timeout=30)
-    logger.info("GitHub HTTP %s pour %s", r.status_code, url)
+    logger.debug("GitHub HTTP %s pour %s", r.status_code, url)
     if r.status_code == 403:  # rate limit : backoff simple
         delay = int(r.headers.get("Retry-After", 60))
         logger.warning("GitHub 403 pour %s : nouvelle tentative dans %s s", url, delay)
@@ -66,10 +78,10 @@ def gh_get(url: str, token: str, **params) -> requests.Response:
 
 
 def sonar_get(path: str, token: str, **params) -> requests.Response:
-    logger.info("SonarCloud GET %s%s params=%s", SONAR_API, path, params)
+    logger.debug("SonarCloud GET %s%s params=%s", SONAR_API, path, params)
     response = requests.get(f"{SONAR_API}{path}", auth=(token, ""),
                             params=params, timeout=30)
-    logger.info("SonarCloud HTTP %s pour %s%s", response.status_code, SONAR_API, path)
+    logger.debug("SonarCloud HTTP %s pour %s%s", response.status_code, SONAR_API, path)
     return response
 
 
@@ -110,7 +122,7 @@ def load_teams(teams_dir: str = "teams") -> list[Team]:
             continue
         teams.append(Team(data["team-name"], data["repo"],
                           data.get("sonar-org", ""), issue_number=0))
-        logger.info("Equipe chargee : %s | https://github.com/%s | Sonar org=%s | fichier=%s",
+        logger.debug("Equipe chargee : %s | https://github.com/%s | Sonar org=%s | fichier=%s",
                     teams[-1].name, teams[-1].repo_full, teams[-1].sonar_org, path)
     logger.info("%s equipe(s) chargee(s)", len(teams))
     if not teams:
@@ -147,7 +159,7 @@ def fetch_gate_current(team: Team, token: str) -> bool:
                   projectKey=team.project_key, organization=team.sonar_org,
                   branch="main")
     status = r.json().get("projectStatus", {}).get("status")
-    logger.info("[%s] Quality Gate : %s", team.repo_full, status or "indisponible")
+    logger.debug("[%s] Quality Gate : %s", team.repo_full, status or "indisponible")
     return status == "OK"
 
 
@@ -282,7 +294,7 @@ def quality_breakdown(measures: dict, gate_current: bool,
 
 
 def score_team(team: Team, cfg) -> tuple[Score, dict]:
-    logger.info("Debut scoring : %s | https://github.com/%s | projet Sonar=%s | org=%s",
+    logger.debug("Debut scoring : %s | https://github.com/%s | projet Sonar=%s | org=%s",
                 team.name, team.repo_full, team.project_key, team.sonar_org)
     s = Score()
 
@@ -302,7 +314,7 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
     s.quality = round(sum(quality[key] for key in
                           ("gate", "maintainability", "security", "coverage", "supply_chain")), 2)
     quality["total"] = s.quality
-    logger.info("[%s] Qualite=%s/60 | détail=%s | tests CI=%s | Trivy CRITICAL=%s HIGH=%s",
+    logger.debug("[%s] Qualite=%s/60 | détail=%s | tests CI=%s | Trivy CRITICAL=%s HIGH=%s",
                 team.repo_full, s.quality, quality, tests["status"], crit, high)
 
     # --- B. Kaizen (40) ----------------------------------------------
@@ -331,7 +343,7 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
 
     # Heijunka (10)
     commits = fetch_commits(team, cfg.gh_token, cfg.window_start)
-    logger.info("[%s] Depuis %s : %s commits | %s runs CI examines | %s redressements | %s snapshots archives",
+    logger.debug("[%s] Depuis %s : %s commits | %s runs CI examines | %s redressements | %s snapshots archives",
                 team.repo_full, cfg.window_start.isoformat(), len(commits),
                 len(runs), recoveries, len(archive))
     times = [datetime.fromisoformat(c["commit"]["author"]["date"].replace("Z", "+00:00"))
@@ -348,8 +360,8 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
 
     s.total = round(s.quality + s.pente + s.resilience + s.heijunka + s.bonus, 2)
     s.eligible = len(commits) >= MIN_COMMITS and gate_current
-    logger.info("[%s] Score total=%s | qualite=%s pente=%s resilience=%s heijunka=%s bonus=%s | eligible=%s (commits=%s/%s, gate=%s)",
-                team.repo_full, s.total, s.quality, s.pente, s.resilience,
+    logger.info("[%s] Score final %s : total=%s | qualité=%s pente=%s résilience=%s heijunka=%s bonus=%s | eligible=%s (commits=%s/%s, gate=%s)",
+                team.repo_full, team.name, s.total, s.quality, s.pente, s.resilience,
                 s.heijunka, s.bonus, s.eligible, len(commits), MIN_COMMITS, gate_current)
 
     return s, {"measures": measures, "commits": len(commits),
@@ -412,7 +424,7 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
             logger.warning("[%s] Trivy indisponible : aucun run termine sur main", team.repo_full)
             return (-1, -1)
         latest = max(runs, key=lambda run: run["created_at"])
-        logger.info("[%s] Run Trivy selectionne : https://github.com/%s/actions/runs/%s (date=%s)",
+        logger.debug("[%s] Run Trivy selectionne : https://github.com/%s/actions/runs/%s (date=%s)",
                     team.repo_full, team.repo_full, latest["id"], latest["created_at"])
         response = gh_get(
             f"{GITHUB_API}/repos/{team.repo_full}/actions/runs/{latest['id']}/artifacts",
@@ -426,7 +438,7 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
             logger.warning("[%s] Trivy indisponible : artefact absent ou expire sur le run %s",
                            team.repo_full, latest["id"])
             return (-1, -1)
-        logger.info("[%s] Telechargement artefact trivy-report id=%s", team.repo_full, artifact["id"])
+        logger.debug("[%s] Telechargement artefact trivy-report id=%s", team.repo_full, artifact["id"])
         response = gh_get(
             f"{GITHUB_API}/repos/{team.repo_full}/actions/artifacts/{artifact['id']}/zip",
             token,
@@ -450,7 +462,7 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
             for vulnerability in result.get("Vulnerabilities", []):
                 critical += vulnerability.get("Severity") == "CRITICAL"
                 high += vulnerability.get("Severity") == "HIGH"
-            logger.info("[%s] Trivy : CRITICAL=%s HIGH=%s", team.repo_full, critical, high)
+            logger.debug("[%s] Trivy : CRITICAL=%s HIGH=%s", team.repo_full, critical, high)
         return critical, high
     except (requests.RequestException, zipfile.BadZipFile, KeyError,
             ValueError, TypeError, AttributeError) as error:
@@ -466,8 +478,7 @@ def fetch_dependency_vulns(team: Team, token: str) -> tuple[int, int]:
 # 15 min même si l'API Sonar ne donne qu'un instantané.
 # ----------------------------------------------------------------------
 def main() -> None:
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(message)s")
+    configure_logging()
     p = argparse.ArgumentParser()
     p.add_argument("--org", required=True)
     p.add_argument("--repo", required=True)
@@ -542,7 +553,6 @@ def main() -> None:
     logger.info("Batch termine : %s equipes | classement=%s | historique=%s",
                 len(leaderboard), os.path.abspath("data/leaderboard.json"),
                 os.path.abspath("data/scores-history.json"))
-    print(f"OK — {len(leaderboard)} équipes -> data/leaderboard.json")
 
 
 if __name__ == "__main__":

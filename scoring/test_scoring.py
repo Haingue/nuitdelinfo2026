@@ -16,7 +16,7 @@ class LoggingTests(unittest.TestCase):
         response = Mock(status_code=200)
         response.url = 'https://storage.example/report?signature=secret-signature'
         with patch.object(scoring.requests, 'get', return_value=response), \
-                self.assertLogs(scoring.logger, level='INFO') as logs:
+            self.assertLogs(scoring.logger, level='DEBUG') as logs:
             scoring.gh_get('https://api.github.com/repos/owner/repo', 'github-secret')
             scoring.sonar_get('/measures/component', 'sonar-secret', component='owner_repo')
         output = '\n'.join(logs.output)
@@ -42,6 +42,25 @@ class WindowStartTests(unittest.TestCase):
     def test_parses_iso8601_window_start(self):
         result = scoring.parse_window_start('2026-11-05T20:00:00+01:00')
         self.assertEqual(result.isoformat(), '2026-11-05T20:00:00+01:00')
+
+
+class LoggingConfigurationTests(unittest.TestCase):
+    def test_info_is_the_default_log_level(self):
+        with patch.dict('os.environ', {}, clear=True), \
+                patch.object(scoring.logging, 'basicConfig') as basic_config:
+            scoring.configure_logging()
+        self.assertEqual(basic_config.call_args.kwargs['level'], scoring.logging.INFO)
+
+    def test_debug_can_be_enabled_with_environment_variable(self):
+        with patch.dict('os.environ', {'SCORING_LOG_LEVEL': 'debug'}), \
+                patch.object(scoring.logging, 'basicConfig') as basic_config:
+            scoring.configure_logging()
+        self.assertEqual(basic_config.call_args.kwargs['level'], scoring.logging.DEBUG)
+
+    def test_rejects_unknown_log_level(self):
+        with patch.dict('os.environ', {'SCORING_LOG_LEVEL': 'TRACE'}):
+            with self.assertRaisesRegex(ValueError, 'SCORING_LOG_LEVEL invalide'):
+                scoring.configure_logging()
 
 
 class DependencyVulnsTests(unittest.TestCase):

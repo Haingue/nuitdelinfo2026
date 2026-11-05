@@ -39,6 +39,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token SonarCloud lecture
           IDENTITY_SALT: ${{ secrets.IDENTITY_SALT }} # sel de l'empreinte d'identité
           WINDOW_START: ${{ vars.WINDOW_START }} # ouverture de la nuit (variable repo)
+          SCORING_LOG_LEVEL: ${{ vars.SCORING_LOG_LEVEL || 'INFO' }} # INFO ou DEBUG
         run: python scoring/scoring.py --org Haingue --repo nuitdelinfo2026
 
       - name: Committer les données leaderboard

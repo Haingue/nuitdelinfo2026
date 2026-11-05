@@ -71,7 +71,7 @@ Trois acteurs, deux repos, zéro serveur :
 | Multi-inscriptions / flood   | Unicité nom + repo dans le bot ; un fichier `teams/` par équipe ; `concurrency` sur le batch                                      | inscription.yml                  |
 | Contestation                 | Tout est commité et horodaté : inscriptions, fichiers d'équipe, chaque leaderboard, snapshots de scores                           | Git = audit trail                |
 
-**Secrets** (repo du défi) : `GH_PAT` (lecture API, attention aux rate limits), `SONAR_TOKEN` (SonarCloud, lecture), `IDENTITY_SALT` (sel de l'empreinte — ne vit **jamais** en CI côté équipes). **Variable obligatoire** : `WINDOW_START`, à définir dans Settings → Secrets and variables → Actions → Variables du repo du défi, au début de la fenêtre d'évaluation. Format ISO 8601 avec fuseau, par exemple `2026-11-05T20:00:00+01:00`. Sans cette variable, le batch s'arrête au lieu de prendre l'heure courante et de publier zéro commit. **Labels** à créer : `inscription`, `inscrit ✅`.
+**Secrets** (repo du défi) : `GH_PAT` (lecture API, attention aux rate limits), `SONAR_TOKEN` (SonarCloud, lecture), `IDENTITY_SALT` (sel de l'empreinte — ne vit **jamais** en CI côté équipes). **Variables** : `WINDOW_START` (obligatoire, date ISO 8601 avec fuseau au début de la fenêtre, ex. `2026-11-05T20:00:00+01:00`; sans elle le batch s'arrête au lieu de publier zéro commit) et `SCORING_LOG_LEVEL` (`INFO` par défaut, `DEBUG` pour les traces API et le détail des calculs). **Labels** à créer : `inscription`, `inscrit ✅`.
 
 ## 6. Subtilités d'implémentation (les pièges rencontrés)
 
