@@ -344,6 +344,13 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Installer pnpm compatible avec les lockfiles v9
+        if: hashFiles('**/pnpm-lock.yaml') != ''
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+          run_install: false
+
       - name: Détecter et exécuter les suites Java/Python/Node
         id: run-tests
         run: |
@@ -515,13 +522,47 @@ jobs:
             JAVA_RESULT=0
 
             if [ "$JAVA_KIND" = "maven" ]; then
+              MAVEN_HAS_JACOCO=$(python3 - "$JAVA_DIR/pom.xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          pom = ET.parse(sys.argv[1]).getroot()
+          local_name = lambda element: element.tag.rsplit('}', 1)[-1]
+          configured = False
+          for build in pom:
+              if local_name(build) != 'build':
+                  continue
+              for plugins in build:
+                  if local_name(plugins) != 'plugins':
+                      continue
+                  for plugin in plugins:
+                      if local_name(plugin) != 'plugin':
+                          continue
+                      artifact = next((child.text for child in plugin
+                                       if local_name(child) == 'artifactId'), '')
+                      if artifact != 'jacoco-maven-plugin':
+                          continue
+                      for execution in plugin.iter():
+                          if local_name(execution) == 'goal' and execution.text == 'prepare-agent':
+                              configured = True
+          print('true' if configured else 'false')
+          PY
+          )
               if [ -f "$JAVA_DIR/mvnw" ]; then
-                (cd "$JAVA_DIR" && bash ./mvnw -B -ntp org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent verify)
+                if [ "$MAVEN_HAS_JACOCO" = "true" ]; then
+                  (cd "$JAVA_DIR" && bash ./mvnw -B -ntp verify)
+                else
+                  (cd "$JAVA_DIR" && bash ./mvnw -B -ntp org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent verify)
+                fi
                 JAVA_RESULT=$?
                 (cd "$JAVA_DIR" && bash ./mvnw -B -ntp org.jacoco:jacoco-maven-plugin:0.8.14:report)
                 REPORT_RESULT=$?
               elif command -v mvn >/dev/null 2>&1; then
-                mvn -B -ntp -f "$JAVA_DIR/pom.xml" org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent verify
+                if [ "$MAVEN_HAS_JACOCO" = "true" ]; then
+                  mvn -B -ntp -f "$JAVA_DIR/pom.xml" verify
+                else
+                  mvn -B -ntp -f "$JAVA_DIR/pom.xml" org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent verify
+                fi
                 JAVA_RESULT=$?
                 mvn -B -ntp -f "$JAVA_DIR/pom.xml" org.jacoco:jacoco-maven-plugin:0.8.14:report
                 REPORT_RESULT=$?
@@ -595,7 +636,7 @@ jobs:
             (
               cd "$PACKAGE_DIR" || exit 1
               if [ -f pnpm-lock.yaml ]; then
-                corepack enable && pnpm install --frozen-lockfile
+                pnpm install --frozen-lockfile
               elif [ -f yarn.lock ]; then
                 corepack enable && yarn install --frozen-lockfile
               elif [ -f package-lock.json ]; then
