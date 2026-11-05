@@ -162,11 +162,11 @@ jobs:
 
       - name: Vérifier les rapports de couverture disponibles
         run: |
-          if find coverage-artifacts -type f -name '*.xml' -print -quit 2>/dev/null | grep -q .; then
-            echo "Rapport XML de couverture téléchargé :"
-            find coverage-artifacts -type f -name '*.xml' -print
+          if find coverage-artifacts -type f \( -name '*.xml' -o -name 'lcov.info' \) -print -quit 2>/dev/null | grep -q .; then
+            echo "Rapports de couverture téléchargés :"
+            find coverage-artifacts -type f \( -name '*.xml' -o -name 'lcov.info' \) -print
           else
-            echo "::warning::Aucun rapport XML JaCoCo disponible; SonarCloud affichera une couverture nulle."
+            echo "::warning::Aucun rapport de couverture disponible; SonarCloud affichera une couverture nulle."
           fi
 
       - name: Installer SonarScanner
@@ -188,6 +188,7 @@ jobs:
             -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**" \
             -Dsonar.coverage.jacoco.xmlReportPaths="coverage-artifacts/**/jacoco*.xml" \
             -Dsonar.python.coverage.reportPaths="coverage-artifacts/python/coverage.xml" \
+            -Dsonar.javascript.lcov.reportPaths="coverage-artifacts/node/**/lcov.info" \
             -Dsonar.python.version=3.11
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # token de l'équipe (cf. procédure de l'énoncé)
@@ -486,16 +487,52 @@ jobs:
               continue
             fi
             PACKAGE_DIR=$(dirname "$PACKAGE")
+            PACKAGE_PATH=${PACKAGE_DIR#./}
+            PACKAGE_KEY=$(printf '%s' "${PACKAGE_PATH:-root}" | tr '/ ' '__')
+            COVERAGE_DIR="$GITHUB_WORKSPACE/coverage-artifacts/node/$PACKAGE_KEY"
             (
               cd "$PACKAGE_DIR" || exit 1
               if [ -f pnpm-lock.yaml ]; then
-                corepack enable && pnpm install --frozen-lockfile && CI=true pnpm test
+                corepack enable && pnpm install --frozen-lockfile
               elif [ -f yarn.lock ]; then
-                corepack enable && yarn install --frozen-lockfile && CI=true yarn test
+                corepack enable && yarn install --frozen-lockfile
               elif [ -f package-lock.json ]; then
-                npm ci && CI=true npm test
+                npm ci
               else
-                npm install && CI=true npm test
+                npm install
+              fi
+              INSTALL_RESULT=$?
+              if [ "$INSTALL_RESULT" -ne 0 ]; then exit "$INSTALL_RESULT"; fi
+
+              if node -e 'try { require.resolve("vitest"); process.exit(0) } catch { process.exit(1) }'; then
+                COVERAGE_PROVIDER=$(node -e 'for (const name of ["@vitest/coverage-v8", "@vitest/coverage-istanbul"]) { try { require.resolve(name); process.stdout.write(name.split("/").pop().replace("coverage-", "")); process.exit(0) } catch {} } process.exit(1)')
+                if [ "$?" -eq 0 ]; then
+                  mkdir -p "$COVERAGE_DIR"
+                  if [ -f pnpm-lock.yaml ]; then
+                    CI=true pnpm test -- --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportsDirectory="$COVERAGE_DIR"
+                  elif [ -f yarn.lock ]; then
+                    CI=true yarn test --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportsDirectory="$COVERAGE_DIR"
+                  else
+                    CI=true npm test -- --coverage --coverage.provider="$COVERAGE_PROVIDER" --coverage.reporter=lcov --coverage.reportsDirectory="$COVERAGE_DIR"
+                  fi
+                else
+                  echo "::warning::Vitest détecté dans $PACKAGE_DIR, mais aucun provider @vitest/coverage-v8 ou @vitest/coverage-istanbul n'est installé. Ajoutez @vitest/coverage-v8 à vos devDependencies pour publier la couverture Sonar."
+                  if [ -f pnpm-lock.yaml ]; then
+                    CI=true pnpm test
+                  elif [ -f yarn.lock ]; then
+                    CI=true yarn test
+                  else
+                    CI=true npm test
+                  fi
+                fi
+              else
+                if [ -f pnpm-lock.yaml ]; then
+                  CI=true pnpm test
+                elif [ -f yarn.lock ]; then
+                  CI=true yarn test
+                else
+                  CI=true npm test
+                fi
               fi
             )
             record_suite "Node ($(dirname "$PACKAGE"))" "$?"
@@ -536,6 +573,7 @@ jobs:
             **/target/site/jacoco/jacoco.xml
             **/build/reports/jacoco/test/jacocoTestReport.xml
             coverage-artifacts/python/coverage.xml
+            coverage-artifacts/node/**/*.info
           if-no-files-found: warn
           retention-days: 1
 

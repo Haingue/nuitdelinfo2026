@@ -47,7 +47,7 @@ Vous n'allez pas seulement développer une application. Vous allez construire un
 
 La note de maintenabilité est calculée depuis le rating SonarCloud (`sqale_rating`, dérivé de la dette technique) : A = 15, B = 10, C = 5, D/E = 0. Le calculateur normalise les valeurs Sonar `1.0` à `5.0` (respectivement A à E). La dette technique, son ratio et les code smells sont également affichés dans le détail qualité. La couverture Sonar est proportionnelle jusqu'à 60 %; les tests exécutés par la CI ne donnent pas de points supplémentaires.
 
-La couverture affichée par SonarCloud est importée depuis un rapport produit pendant la CI : JaCoCo XML pour Maven/Gradle et Cobertura XML via `pytest-cov` pour Python. Le workflow transmet ces rapports au job d'analyse; sans rapport généré, SonarCloud ne peut pas calculer la couverture.
+La couverture affichée par SonarCloud est importée depuis un rapport produit pendant la CI : JaCoCo XML pour Maven/Gradle, Cobertura XML via `pytest-cov` pour Python et LCOV via Vitest pour Node.js. Pour Vitest, ajoutez `@vitest/coverage-v8` dans les `devDependencies` à la même version que Vitest; le workflow ajoute les options de couverture au script `test` et transmet le rapport LCOV à SonarCloud. Sans rapport généré, SonarCloud ne peut pas calculer la couverture.
 
 ### B. Kaizen — votre trajectoire — 40 pts
 
