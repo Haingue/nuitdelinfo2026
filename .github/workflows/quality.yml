@@ -186,7 +186,7 @@ jobs:
             -Dsonar.sources=. \
             -Dsonar.exclusions="**/*.min.js,**/vendor/**,**/dist/**,**/node_modules/**" \
             -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**" \
-            -Dsonar.coverage.jacoco.xmlReportPaths="coverage-artifacts/**/jacoco*.xml" \
+            -Dsonar.coverage.jacoco.xmlReportPaths="coverage-artifacts/java/**/jacoco*.xml" \
             -Dsonar.python.coverage.reportPaths="coverage-artifacts/python/coverage.xml" \
             -Dsonar.javascript.lcov.reportPaths="coverage-artifacts/node/**/lcov.info" \
             -Dsonar.python.version=3.11
@@ -388,72 +388,132 @@ jobs:
             record_suite "Python (pytest)" "$TEST_RESULT"
           fi
 
-          JAVA_BUILD=$(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv -o -name build -o -name target \) -prune -o \
-            -type f \( -name pom.xml -o -name build.gradle -o -name build.gradle.kts \) -print -quit)
-          JAVA_TEST=$(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv -o -name build -o -name target \) -prune -o \
-            -type f \( -path '*/src/test/*' -o -name '*Test.java' -o -name '*Tests.java' -o -name '*Test.kt' -o -name '*Tests.kt' \) -print -quit)
-          if [ -n "$JAVA_BUILD" ] && [ -n "$JAVA_TEST" ]; then
-            JAVA_DIR=$(dirname "$JAVA_BUILD")
-            (
-              cd "$JAVA_DIR" || exit 1
-              if [ -f pom.xml ]; then
-                if [ -f mvnw ]; then
-                  bash ./mvnw -B verify
-                else
-                  mvn -B verify
-                fi
-              elif [ -f gradlew ]; then
-                cat > "$RUNNER_TEMP/jacoco.init.gradle" <<'GRADLE'
+          JAVA_PROJECTS=$(python3 - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          ignored = {'.git', 'node_modules', '.venv', 'venv', 'target', 'build'}
+          pom_files = sorted(path for path in Path('.').rglob('pom.xml')
+                             if not ignored.intersection(path.parts))
+          pom_dirs = {path.parent.resolve() for path in pom_files}
+          aggregated_modules = set()
+          for pom in pom_files:
+              try:
+                  root = ET.parse(pom).getroot()
+              except (ET.ParseError, OSError):
+                  continue
+              for element in root.iter():
+                  if element.tag.rsplit('}', 1)[-1] == 'module' and element.text:
+                      module_dir = (pom.parent / element.text.strip()).resolve()
+                      if (module_dir / 'pom.xml').is_file():
+                          aggregated_modules.add(module_dir)
+
+          projects = []
+          for pom_dir in sorted(pom_dirs):
+              if pom_dir in aggregated_modules:
+                  continue
+              projects.append(('maven', pom_dir))
+
+          settings_dirs = {path.parent.resolve() for path in Path('.').rglob('settings.gradle')}
+          settings_dirs.update(path.parent.resolve() for path in Path('.').rglob('settings.gradle.kts'))
+          gradle_build_dirs = {path.parent.resolve() for pattern in ('build.gradle', 'build.gradle.kts')
+                               for path in Path('.').rglob(pattern)}
+          for build_dir in sorted(gradle_build_dirs):
+              if build_dir in pom_dirs:
+                  continue
+              if any(parent in settings_dirs for parent in build_dir.parents):
+                  continue
+              projects.append(('gradle', build_dir))
+
+          def has_tests(directory):
+              for path in directory.rglob('*'):
+                  if not path.is_file() or ignored.intersection(path.parts):
+                      continue
+                  if any(other != directory and directory in other.parents and other in path.parents
+                       for _, other in projects):
+                      continue
+                  relative_parts = path.relative_to(directory).parts
+                  if any(relative_parts[index:index + 2] == ('src', 'test')
+                         for index in range(len(relative_parts) - 1)):
+                      return True
+                  if path.name.endswith(('Test.java', 'Tests.java', 'Test.kt', 'Tests.kt')):
+                      return True
+              return False
+
+          for kind, directory in projects:
+              if not has_tests(directory):
+                  continue
+              relative = os.path.relpath(directory, Path.cwd())
+              print(f'{kind}|{relative}')
+          PY
+          )
+
+          if [ -n "$JAVA_PROJECTS" ]; then
+            cat > "$RUNNER_TEMP/jacoco.init.gradle" <<'GRADLE'
           allprojects {
               apply plugin: 'jacoco'
+              jacoco {
+                  toolVersion = '0.8.14'
+              }
               tasks.withType(Test).configureEach {
                   finalizedBy tasks.named('jacocoTestReport')
               }
-                jacoco {
-                  toolVersion = '0.8.14'
-                }
               tasks.named('jacocoTestReport') {
                   reports {
                       xml.required = true
                   }
-                  executionData tasks.withType(Test)
               }
           }
           GRADLE
-                bash ./gradlew test --no-daemon --init-script "$RUNNER_TEMP/jacoco.init.gradle"
+          fi
+
+          while IFS='|' read -r JAVA_KIND JAVA_DIR; do
+            [ -n "$JAVA_KIND" ] || continue
+            JAVA_RESULT=0
+
+            if [ "$JAVA_KIND" = "maven" ]; then
+              if [ -f "$JAVA_DIR/mvnw" ]; then
+                (cd "$JAVA_DIR" && bash ./mvnw -B -ntp org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent verify)
+                JAVA_RESULT=$?
+                (cd "$JAVA_DIR" && bash ./mvnw -B -ntp org.jacoco:jacoco-maven-plugin:0.8.14:report)
+                REPORT_RESULT=$?
+              elif command -v mvn >/dev/null 2>&1; then
+                mvn -B -ntp -f "$JAVA_DIR/pom.xml" org.jacoco:jacoco-maven-plugin:0.8.14:prepare-agent verify
+                JAVA_RESULT=$?
+                mvn -B -ntp -f "$JAVA_DIR/pom.xml" org.jacoco:jacoco-maven-plugin:0.8.14:report
+                REPORT_RESULT=$?
               else
-                cat > "$RUNNER_TEMP/jacoco.init.gradle" <<'GRADLE'
-          allprojects {
-              apply plugin: 'jacoco'
-              tasks.withType(Test).configureEach {
-                  finalizedBy tasks.named('jacocoTestReport')
-              }
-                jacoco {
-                  toolVersion = '0.8.14'
-                }
-              tasks.named('jacocoTestReport') {
-                  reports {
-                      xml.required = true
-                  }
-                  executionData tasks.withType(Test)
-              }
-          }
-          GRADLE
-                gradle test --no-daemon --init-script "$RUNNER_TEMP/jacoco.init.gradle"
+                echo "::error::Maven détecté dans $JAVA_DIR mais mvn/mvnw est absent."
+                JAVA_RESULT=1
+                REPORT_RESULT=1
               fi
-            )
-            JAVA_RESULT=$?
-            JAVA_REPORT=$(python3 - <<'PY'
+            else
+              if [ -f "$JAVA_DIR/gradlew" ]; then
+                (cd "$JAVA_DIR" && bash ./gradlew test --no-daemon --init-script "$RUNNER_TEMP/jacoco.init.gradle")
+              else
+                (cd "$JAVA_DIR" && gradle test --no-daemon --init-script "$RUNNER_TEMP/jacoco.init.gradle")
+              fi
+              JAVA_RESULT=$?
+              REPORT_RESULT=0
+            fi
+
+            if [ "$REPORT_RESULT" -ne 0 ]; then JAVA_RESULT=1; fi
+            JAVA_REPORT=$(JAVA_PROJECT_DIR="$JAVA_DIR" python3 - <<'PY'
           import glob
           import json
+          import os
           import xml.etree.ElementTree as ET
+          from pathlib import Path
 
+          project_dir = Path(os.environ["JAVA_PROJECT_DIR"])
           patterns = (
               '**/target/surefire-reports/TEST-*.xml',
               '**/target/failsafe-reports/TEST-*.xml',
               '**/build/test-results/test/TEST-*.xml',
           )
-          paths = sorted({path for pattern in patterns for path in glob.glob(pattern, recursive=True)})
+          paths = sorted({path for pattern in patterns
+                          for path in glob.glob(str(project_dir / pattern), recursive=True)})
           tests = failures = errors = 0
           for path in paths:
               try:
@@ -467,20 +527,20 @@ jobs:
                             'failures': failures, 'errors': errors}))
           PY
           )
-            JAVA_REPORT_ERROR=$?
-            if [ "$JAVA_REPORT_ERROR" -eq 0 ]; then
+            if [ "$?" -eq 0 ]; then
               JAVA_REPORTS=$(jq -r '.reports' <<< "$JAVA_REPORT")
               JAVA_FAILED_TESTS=$(jq -r '.failures + .errors' <<< "$JAVA_REPORT")
               FAILED_TESTS=$((FAILED_TESTS + JAVA_FAILED_TESTS))
               if [ "$JAVA_REPORTS" -eq 0 ] || [ "$JAVA_FAILED_TESTS" -gt 0 ]; then
                 JAVA_RESULT=1
               fi
-              echo "Java reports: $(jq -r '.tests' <<< "$JAVA_REPORT") tests, $JAVA_FAILED_TESTS échec(s), $JAVA_REPORTS fichier(s) de rapport."
+              echo "Java ($JAVA_DIR): $(jq -r '.tests' <<< "$JAVA_REPORT") tests, $JAVA_FAILED_TESTS échec(s), $JAVA_REPORTS rapport(s)."
             else
               JAVA_RESULT=1
             fi
-            record_suite "Java ($(dirname "$JAVA_BUILD"))" "$JAVA_RESULT"
-          fi
+
+            record_suite "Java ($JAVA_DIR)" "$JAVA_RESULT"
+          done <<< "$JAVA_PROJECTS"
 
           while IFS= read -r -d '' PACKAGE; do
             if ! node -e 'process.exit(require(process.argv[1]).scripts?.test ? 0 : 1)' "$PWD/$PACKAGE"; then
@@ -558,6 +618,25 @@ jobs:
           echo "status=$STATUS" >> "$GITHUB_OUTPUT"
           if [ "$STATUS" = "failed" ]; then exit 1; fi
 
+      - name: Préparer les rapports de couverture pour Sonar
+        if: always()
+        run: |
+          mkdir -p sonar-coverage/java sonar-coverage/python sonar-coverage/node
+          while IFS= read -r -d '' REPORT; do
+            RELATIVE=${REPORT#./}
+            mkdir -p "sonar-coverage/java/$(dirname "$RELATIVE")"
+            cp "$REPORT" "sonar-coverage/java/$RELATIVE"
+          done < <(find . -type d \( -name .git -o -name node_modules -o -name .venv -o -name venv \) -prune -o \
+            -type f \( -path '*/target/site/jacoco/jacoco.xml' -o -path '*/build/reports/jacoco/test/jacocoTestReport.xml' \) -print0)
+          if [ -s coverage-artifacts/python/coverage.xml ]; then
+            cp coverage-artifacts/python/coverage.xml sonar-coverage/python/coverage.xml
+          fi
+          if [ -d coverage-artifacts/node ]; then
+            cp -R coverage-artifacts/node/. sonar-coverage/node/
+          fi
+          echo "Rapports préparés pour Sonar :"
+          find sonar-coverage -type f -print
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -569,11 +648,7 @@ jobs:
         if: always()
         with:
           name: coverage-reports
-          path: |
-            **/target/site/jacoco/jacoco.xml
-            **/build/reports/jacoco/test/jacocoTestReport.xml
-            coverage-artifacts/python/coverage.xml
-            coverage-artifacts/node/**/*.info
+          path: sonar-coverage/
           if-no-files-found: warn
           retention-days: 1
 
