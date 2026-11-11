@@ -139,9 +139,8 @@ def find_node_executable() -> Optional[str]:
     
     # Chercher dans les chemins courants de nvm
     nvm_paths = [
+        "/usr/local/nvm/versions/node/v20.20.2/bin/node",
         "/usr/local/nvm/versions/node/*/bin/node",
-        "/root/.nvm/versions/node/*/bin/node",
-        "~/.nvm/versions/node/*/bin/node",
     ]
     
     for pattern in nvm_paths:
@@ -154,9 +153,20 @@ def find_node_executable() -> Optional[str]:
 
 
 def find_pnpm_executable() -> Optional[str]:
-    """Trouve l'exécutable pnpm"""
     if command_exists("pnpm"):
         return "pnpm"
+
+    # Chercher dans les chemins courants (nvm, pnpm-global, etc.)
+    pnpm_paths = [
+        "/usr/local/nvm/versions/node/v20.20.2/bin/pnpm",
+        "/usr/local/bin/pnpm"
+    ]
+
+    for path in pnpm_paths:
+        expanded = os.path.expanduser(path)
+        if os.path.exists(expanded):
+            return expanded
+
     return None
 
 
