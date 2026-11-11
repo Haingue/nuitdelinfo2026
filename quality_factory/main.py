@@ -16,7 +16,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from quality_factory.config import Config
-from quality_factory.models import DetectionResult, ExecutionReport, TestStatus
+from quality_factory.models import DetectionResult, ExecutionReport, TestStatus, TestSuiteResult
 from quality_factory.detect import detect_all_projects
 from quality_factory.runners.python_runner import run_python_tests
 from quality_factory.runners.java_runner import run_java_tests
@@ -50,8 +50,8 @@ def main():
     parser.add_argument(
         "--temp-dir",
         type=Path,
-        default=Path("/tmp"),
-        help="Dossier temporaire (par défaut: /tmp)",
+        default=None,
+        help="Dossier temporaire (par défaut: temp système)",
     )
     parser.add_argument(
         "--dry-run",
@@ -70,13 +70,31 @@ def main():
     workspace = args.workspace.resolve()
     coverage_dir = args.coverage_dir or (workspace / "coverage-artifacts")
     results_file = args.results_file or (workspace / "test-results.json")
-    temp_dir = args.temp_dir.resolve()
+    
+    # Gérer le temp_dir (compatibilité Windows)
+    if args.temp_dir:
+        temp_dir = args.temp_dir.resolve()
+    else:
+        import tempfile
+        import sys
+        # Sur Windows, /tmp n'existe pas
+        if sys.platform == "win32":
+            temp_dir = Path(tempfile.gettempdir())
+        else:
+            temp_dir = Path("/tmp")
+    
+    temp_dir.mkdir(parents=True, exist_ok=True)
     
     print(f"🔍 Workspace: {workspace}")
     print(f"📁 Coverage dir: {coverage_dir}")
     print(f"📄 Results file: {results_file}")
     print(f"🗃️  Temp dir: {temp_dir}")
     print()
+    
+    # Vérifier que le workspace existe
+    if not workspace.exists():
+        print(f"❌ Erreur: Le workspace n'existe pas: {workspace}")
+        return 1
     
     # Changer de répertoire de travail
     os.chdir(workspace)
@@ -142,6 +160,19 @@ def main():
     for node_project in detection_result.node_packages:
         if args.verbose:
             print(f"\n🚀 Exécution tests Node: {node_project.path}")
+        
+        # Vérifier que Node.js est disponible
+        from quality_factory.utils.command import find_node_executable
+        node_exec = find_node_executable()
+        if not node_exec:
+            print(f"   ⚠️  Node.js non trouvé, saut du projet Node: {node_project.path}")
+            suite_results.append(TestSuiteResult(
+                name=f"Node ({node_project.path})",
+                status=TestStatus.SKIPPED,
+                exit_code=0,
+                error="Node.js non installé"
+            ))
+            continue
         
         node_key = str(node_project.path).replace("/", "__")
         node_coverage_dir = coverage_dir / "node" / node_key

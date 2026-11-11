@@ -1,5 +1,4 @@
 # Dockerfile pour Quality Factory
-# Image de base: Ubuntu 24.04
 FROM ubuntu:24.04
 
 # Métadonnées
@@ -11,7 +10,7 @@ LABEL version="1.0.0"
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Paris
 
-# --- Installation des dépendances système ---
+# --- Installation de TOUTES les dépendances système en UNE SEULE couche ---
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       curl \
@@ -21,23 +20,25 @@ RUN apt-get update && \
       sudo \
       ca-certificates \
       gnupg \
+      # Java
+      openjdk-21-jdk-headless \
+      # Python 3.12 (version par défaut sur Ubuntu 24.04)
+      python3 \
+      python3-venv \
+      python3-dev \
+      # Maven
+      maven \
       && rm -rf /var/lib/apt/lists/*
 
-# --- Installation de Java (OpenJDK 21) ---
-ENV JAVA_VERSION=21
-RUN apt-get install -y openjdk-${JAVA_VERSION}-jdk-headless && \
-    update-alternatives --set java /usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64/bin/java && \
-    update-alternatives --set javac /usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64/bin/javac
-
-ENV JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64
+# --- Configuration Java ---
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 ENV PATH="$JAVA_HOME/bin:$PATH"
+RUN update-alternatives --set java $JAVA_HOME/bin/java && \
+    update-alternatives --set javac $JAVA_HOME/bin/javac
 
-# --- Installation de Python 3.11 ---
-ENV PYTHON_VERSION=3.11
-RUN apt-get install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python${PYTHON_VERSION}-dev && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${PYTHON_VERSION} 1 && \
-    update-alternatives --set python3 /usr/bin/python${PYTHON_VERSION}
-
+# --- Configuration Python ---
+# Sur Ubuntu 24.04, python3 pointe vers python3.12
+RUN python3 --version
 ENV PYTHON_HOME=/usr
 ENV PATH="$PYTHON_HOME/bin:$PATH"
 
@@ -48,20 +49,18 @@ ENV NVM_VERSION=v0.40.1
 
 # Installer nvm
 RUN mkdir -p $NVM_DIR && \
+    # Installer nvm
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$NVM_VERSION/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && \
+    # Installer Node.js
     nvm install $NODE_VERSION && \
     nvm alias default $NODE_VERSION && \
-    nvm use default
+    nvm use default && \
+    # Installer pnpm
+    npm install -g pnpm@9.15.9
 
 # Ajouter nvm au PATH
-ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
-
-# Installer pnpm globalement
-RUN npm install -g pnpm@9.15.9
-
-# --- Installation de Maven ---
-RUN apt-get install -y maven
+ENV PATH="/root/.nvm/versions/node/v$NODE_VERSION/bin:$PATH"
 
 # --- Installation de Gradle ---
 ENV GRADLE_VERSION=8.8
@@ -88,7 +87,5 @@ COPY run.sh /run.sh
 RUN chmod +x /run.sh
 
 # --- Point d'entrée ---
-ENTRYPOINT ["/run.sh"]
-
-# Commande par défaut
+ENTRYPOINT ["python3", "/quality_factory/main.py"]
 CMD ["--help"]
