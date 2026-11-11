@@ -184,8 +184,8 @@ jobs:
             -Dsonar.organization="${SONAR_ORG}" \
             -Dsonar.host.url="$SONAR_HOST" \
             -Dsonar.sources=. \
-            -Dsonar.exclusions="**/*.min.js,**/vendor/**,**/dist/**,**/node_modules/**,coverage-artifacts/**" \
-            -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**,coverage-artifacts/**" \
+            -Dsonar.exclusions="**/*.min.js,**/vendor/**,**/dist/**,**/node_modules/**,coverage-artifacts/**,**/dto/**,**/entity/**,**/model/**" \
+            -Dsonar.coverage.exclusions="**/*.spec.*,**/tests/**,coverage-artifacts/**,**/dto/**,**/entity/**,**/model/**" \
             -Dsonar.coverage.jacoco.xmlReportPaths="coverage-artifacts/java/**/jacoco*.xml" \
             -Dsonar.python.coverage.reportPaths="coverage-artifacts/python/**/coverage.xml" \
             -Dsonar.javascript.lcov.reportPaths="coverage-artifacts/node/**/lcov.info" \
