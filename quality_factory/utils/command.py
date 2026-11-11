@@ -2,6 +2,8 @@
 Utilitaires pour exécuter des commandes système
 """
 
+import os
+import glob
 import subprocess
 import shlex
 from pathlib import Path
@@ -116,6 +118,20 @@ def find_node_executable() -> Optional[str]:
     for cmd in candidates:
         if command_exists(cmd):
             return cmd
+    
+    # Chercher dans les chemins courants de nvm
+    nvm_paths = [
+        "/usr/local/nvm/versions/node/*/bin/node",
+        "/root/.nvm/versions/node/*/bin/node",
+        "~/.nvm/versions/node/*/bin/node",
+    ]
+    
+    for pattern in nvm_paths:
+        expanded = os.path.expanduser(pattern)
+        matches = glob.glob(expanded)
+        if matches:
+            return matches[0]
+    
     return None
 
 

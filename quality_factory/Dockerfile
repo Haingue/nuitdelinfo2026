@@ -59,8 +59,8 @@ RUN mkdir -p $NVM_DIR && \
     # Installer pnpm
     npm install -g pnpm@9.15.9
 
-# Ajouter nvm au PATH
-ENV PATH="/root/.nvm/versions/node/v$NODE_VERSION/bin:$PATH"
+# Ajouter nvm au PATH - nvm installe dans NVM_DIR/versions/node/v<VERSION>/bin
+ENV PATH="$NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH"
 
 # --- Installation de Gradle ---
 ENV GRADLE_VERSION=8.8
@@ -86,6 +86,14 @@ RUN python3 -m venv /opt/venv && \
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
 
+# --- Script d'entrée qui charge nvm ---
+RUN echo '#!/bin/bash' > /entrypoint.sh && \
+    echo 'set -e' >> /entrypoint.sh && \
+    echo '. "$NVM_DIR/nvm.sh"' >> /entrypoint.sh && \
+    echo 'nvm use default' >> /entrypoint.sh && \
+    echo 'exec python3 -u "/quality_factory/main.py" "$@"' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
 # --- Point d'entrée ---
-ENTRYPOINT ["python3", "-u", "/quality_factory/main.py"]
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["--help"]
