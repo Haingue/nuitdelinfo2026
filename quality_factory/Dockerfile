@@ -87,5 +87,5 @@ COPY run.sh /run.sh
 RUN chmod +x /run.sh
 
 # --- Point d'entrée ---
-ENTRYPOINT ["python3", "/quality_factory/main.py"]
+ENTRYPOINT ["python3", "-u", "/quality_factory/main.py"]
 CMD ["--help"]

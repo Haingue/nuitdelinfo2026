@@ -90,6 +90,7 @@ def main():
     print(f"📄 Results file: {results_file}")
     print(f"🗃️  Temp dir: {temp_dir}")
     print()
+    sys.stdout.flush()
     
     # Vérifier que le workspace existe
     if not workspace.exists():
@@ -101,6 +102,7 @@ def main():
     
     # Étape 1: Détection des projets
     print("🔎 Détection des projets en cours...")
+    sys.stdout.flush()
     detection_result = detect_all_projects(workspace)
     
     print(f"✅ Projets détectés:")
@@ -108,6 +110,7 @@ def main():
     print(f"   Java: {len(detection_result.java_projects)}")
     print(f"   Node: {len(detection_result.node_packages)}")
     print()
+    sys.stdout.flush()
     
     if args.dry_run:
         print("🧪 Mode dry-run: arrêt après détection")
@@ -121,12 +124,14 @@ def main():
     
     # Étape 2: Exécution des tests
     print("⚙️  Exécution des tests en cours...")
+    sys.stdout.flush()
     suite_results = []
     
     # Exécuter les tests Python
     for python_project in detection_result.python_projects:
         if args.verbose:
             print(f"\n🐍 Exécution tests Python: {python_project.path}")
+            sys.stdout.flush()
         
         python_key = str(python_project.path).replace("/", "__")
         python_coverage_dir = coverage_dir / "python" / python_key
@@ -140,11 +145,13 @@ def main():
         
         if args.verbose:
             print(f"   → {result.status.value} (exit: {result.exit_code})")
+            sys.stdout.flush()
     
     # Exécuter les tests Java
     for java_project in detection_result.java_projects:
         if args.verbose:
             print(f"\n☕ Exécution tests Java: {java_project.path}")
+            sys.stdout.flush()
         
         result = run_java_tests(
             project=java_project,
@@ -155,11 +162,13 @@ def main():
         
         if args.verbose:
             print(f"   → {result.status.value} (exit: {result.exit_code})")
+            sys.stdout.flush()
     
     # Exécuter les tests Node
     for node_project in detection_result.node_packages:
         if args.verbose:
             print(f"\n🚀 Exécution tests Node: {node_project.path}")
+            sys.stdout.flush()
         
         # Vérifier que Node.js est disponible
         from quality_factory.utils.command import find_node_executable
@@ -185,6 +194,7 @@ def main():
         
         if args.verbose:
             print(f"   → {result.status.value} (exit: {result.exit_code})")
+            sys.stdout.flush()
     
     # Étape 3: Génération du rapport
     print("\n📊 Génération du rapport...")
