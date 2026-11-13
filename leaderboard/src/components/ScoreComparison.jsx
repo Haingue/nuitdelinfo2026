@@ -8,14 +8,14 @@ export default function ScoreComparison({ history }) {
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[var(--color-foreground-secondary)]">
           Cliquez sur une équipe pour voir sa progression détaillée.
         </p>
         <button
           type="button"
           onClick={() => setIsVisible((visible) => !visible)}
           aria-expanded={isVisible}
-          className="inline-flex items-center gap-2 rounded-md border border-sky-700/70 bg-sky-950/60 px-4 py-2 text-sm font-semibold text-sky-200 transition-colors hover:border-sky-500 hover:bg-sky-900/60"
+          className="inline-flex items-center gap-2 rounded-md border border-[var(--color-border-default)] bg-[var(--color-component-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-foreground-primary)] transition-colors hover:border-[var(--color-border-primary-emphasis)] hover:bg-[var(--color-component-surface-subtle)]"
         >
           <span aria-hidden="true">{isVisible ? '▾' : '↗'}</span>
           {isVisible
@@ -25,15 +25,15 @@ export default function ScoreComparison({ history }) {
       </div>
       {isVisible && (
         <section
-          className="mb-8 border-y border-slate-800 bg-slate-900/40 py-5"
+          className="mb-8 rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-component-surface-subtle)] p-5"
           aria-label="Comparaison des équipes par type de score"
         >
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold text-slate-100">
+              <h2 className="text-lg font-bold text-[var(--color-foreground-primary)]">
                 Progression par type de score
               </h2>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-[var(--color-foreground-secondary)]">
                 Chaque courbe représente une équipe.
               </p>
             </div>
@@ -48,7 +48,7 @@ export default function ScoreComparison({ history }) {
                   type="button"
                   onClick={() => setSelectedMetric(metric.key)}
                   aria-pressed={selectedMetric === metric.key}
-                  className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${selectedMetric === metric.key ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}
+                  className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${selectedMetric === metric.key ? 'bg-[var(--color-fill-primary-default)] text-[var(--color-foreground-contrast-emphasis)]' : 'text-[var(--color-foreground-secondary)] hover:bg-[var(--color-component-surface-muted)] hover:text-[var(--color-foreground-primary)]'}`}
                 >
                   {metric.label}
                 </button>

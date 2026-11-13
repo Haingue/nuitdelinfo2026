@@ -26,21 +26,15 @@ export default function Sparkline({ points, width = 140, height = 36 }) {
       viewBox={`0 0 ${width} ${height}`}
       className="overflow-visible"
     >
-      <defs>
-        <linearGradient id="spark" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#34d399" />
-        </linearGradient>
-      </defs>
       <polyline
         points={path}
         fill="none"
-        stroke="url(#spark)"
+        stroke="var(--color-fill-primary-default)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx={last[0]} cy={last[1]} r="3" fill="#34d399">
+      <circle cx={last[0]} cy={last[1]} r="3" fill="var(--color-fill-primary-default)">
         <animate
           attributeName="r"
           values="3;5;3"

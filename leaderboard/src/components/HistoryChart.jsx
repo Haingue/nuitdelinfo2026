@@ -1,12 +1,12 @@
 import { toSeries } from '../lib/data.js'
 
 const SERIES = [
-  { key: 'total', label: 'Total', color: '#e2e8f0', dash: '6 3' },
-  { key: 'qualite', label: 'Qualité', color: '#10b981', dash: null },
-  { key: 'pente', label: 'Kaizen', color: '#0ea5e9', dash: null },
-  { key: 'resilience', label: 'Résilience', color: '#fbbf24', dash: null },
-  { key: 'heijunka', label: 'Heijunka', color: '#a78bfa', dash: null },
-  { key: 'bonus_malus', label: 'Bonus/Malus', color: '#f43f5e', dash: null },
+  { key: 'total', label: 'Total', color: 'var(--color-fill-neutral-default)', dash: '6 3' },
+  { key: 'qualite', label: 'Qualité', color: 'var(--color-fill-success-default)', dash: null },
+  { key: 'pente', label: 'Kaizen', color: 'var(--color-fill-info-subtle)', dash: null },
+  { key: 'resilience', label: 'Résilience', color: 'var(--color-fill-warning-default)', dash: null },
+  { key: 'heijunka', label: 'Heijunka', color: 'var(--color-core-indigo-400)', dash: null },
+  { key: 'bonus_malus', label: 'Bonus/Malus', color: 'var(--color-fill-error-default)', dash: null },
 ]
 
 const W = 720,
@@ -17,7 +17,7 @@ export default function HistoryChart({ snapshots }) {
   const series = toSeries(snapshots)
   if (series.length < 2)
     return (
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-[var(--color-foreground-secondary)]">
         Pas encore assez de mesures — revenez après le prochain batch (15 min).
       </p>
     )
@@ -45,7 +45,7 @@ export default function HistoryChart({ snapshots }) {
               x2={W - PAD.r}
               y1={y(v)}
               y2={y(v)}
-              stroke="#1e293b"
+              stroke="var(--color-border-subtle)"
               strokeWidth="1"
             />
             <text
@@ -53,7 +53,7 @@ export default function HistoryChart({ snapshots }) {
               y={y(v) + 4}
               textAnchor="end"
               fontSize="10"
-              fill="#64748b"
+              fill="var(--color-foreground-secondary)"
             >
               {Math.round(v)}
             </text>
@@ -69,7 +69,7 @@ export default function HistoryChart({ snapshots }) {
               y={H - 10}
               textAnchor="middle"
               fontSize="10"
-              fill="#64748b"
+              fill="var(--color-foreground-secondary)"
             >
               {String(s.ts).slice(5, 16)}
             </text>
@@ -123,14 +123,14 @@ export default function HistoryChart({ snapshots }) {
         {SERIES.map((c) => (
           <span
             key={c.key}
-            className="flex items-center gap-1.5 text-slate-400"
+            className="flex items-center gap-1.5 text-[var(--color-foreground-secondary)]"
           >
             <span
               className="inline-block h-2 w-4 rounded"
               style={{ background: c.color }}
             />
             {c.label}
-            <span className="text-slate-200">
+            <span className="text-[var(--color-foreground-primary)]">
               {series[series.length - 1][c.key] ?? 0}
             </span>
           </span>

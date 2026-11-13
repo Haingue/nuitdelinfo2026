@@ -40,7 +40,7 @@ export default function App() {
   const rest = teams.slice(3)
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200">
+    <div className="min-h-screen bg-[var(--color-page-background)] text-[var(--color-foreground-primary)]">
       <LeaderboardHeader lastUpdate={lastUpdate} />
 
       {/* Podium */}
@@ -52,7 +52,7 @@ export default function App() {
       <main className="mx-auto mt-8 max-w-5xl px-6 pb-16">
         <ScoreComparison history={history} />
         {rest.length === 0 && podium.length === 0 && (
-          <p className="animate-pulse text-center text-slate-500">
+          <p className="animate-pulse text-center text-[var(--color-foreground-secondary)]">
             Chargement des usines…
           </p>
         )}

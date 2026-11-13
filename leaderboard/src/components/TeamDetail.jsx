@@ -48,37 +48,37 @@ export default function TeamDetail({ team, history, onClose }) {
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-fade-in" />
+      <div className="absolute inset-0 bg-[var(--color-surface-dim-neutral-default)] backdrop-blur-sm animate-fade-in" />
       <div
         className="animate-slide-up relative max-h-[90vh] w-full max-w-3xl overflow-y-auto
-        rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
+        rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-component-surface-subtle)] p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between">
-          <h2 className="text-2xl font-black text-slate-100">{team.team}</h2>
+          <h2 className="text-2xl font-black text-[var(--color-foreground-primary)]">{team.team}</h2>
           <div className="text-right">
-            <div className="font-mono text-3xl font-black text-emerald-400">
+            <div className="font-mono text-3xl font-semibold text-[var(--color-foreground-primary-on-neutral-default)]">
               {(team.score ?? 0).toFixed(1)}
             </div>
-            <div className="text-xs text-slate-500">points · #{team.rank}</div>
+            <div className="text-xs text-[var(--color-foreground-secondary)]">points · #{team.rank}</div>
           </div>
         </div>
 
         <div className="mt-6">
-          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-[var(--color-foreground-secondary)]">
             📈 Progression des scores dans la nuit
           </h3>
           <HistoryChart snapshots={snapshots} />
         </div>
 
         <div className="mt-6">
-          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-[var(--color-foreground-secondary)]">
             📊 Détail actuel par type de score
           </h3>
           <BreakdownChart breakdown={team.breakdown} />
           {quality && (
-            <div className="mt-4 border-t border-slate-800 pt-3">
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <div className="mt-4 border-t border-[var(--color-border-subtle)] pt-3">
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-foreground-secondary)]">
                 Détail qualité · {quality.total}/60
               </h4>
               <dl className="space-y-1 text-sm">
@@ -87,8 +87,8 @@ export default function TeamDetail({ team, history, onClose }) {
                     key={label}
                     className="flex items-center justify-between gap-4"
                   >
-                    <dt className="text-slate-400">{label}</dt>
-                    <dd className="text-right tabular-nums text-slate-200">
+                    <dt className="text-[var(--color-foreground-secondary)]">{label}</dt>
+                    <dd className="text-right tabular-nums text-[var(--color-foreground-primary)]">
                       {points}/{max}
                     </dd>
                   </div>
@@ -96,7 +96,7 @@ export default function TeamDetail({ team, history, onClose }) {
               </dl>
               {(quality.technical_debt_minutes != null ||
                 quality.technical_debt_ratio_percent != null) && (
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-[var(--color-foreground-secondary)]">
                   Dette technique Sonar :{' '}
                   {quality.technical_debt_minutes ?? 'N/D'} min
                   {quality.technical_debt_ratio_percent != null &&
@@ -108,9 +108,9 @@ export default function TeamDetail({ team, history, onClose }) {
             </div>
           )}
           {team.details?.tests && (
-            <p className="mt-3 text-sm text-slate-400">
+            <p className="mt-3 text-sm text-[var(--color-foreground-secondary)]">
               Tests CI :{' '}
-              <span className="text-slate-200">
+              <span className="text-[var(--color-foreground-primary)]">
                 {testStatusLabels[team.details.tests.status] ??
                   team.details.tests.status}
               </span>
@@ -124,8 +124,8 @@ export default function TeamDetail({ team, history, onClose }) {
 
         <button
           onClick={onClose}
-          className="mt-6 w-full rounded-lg border border-slate-700 py-2 text-sm
-            text-slate-300 transition-colors hover:border-slate-500 hover:bg-slate-800"
+          className="mt-6 w-full rounded-lg border border-[var(--color-border-default)] py-2 text-sm
+            text-[var(--color-foreground-primary)] transition-colors hover:border-[var(--color-border-neutral-default)] hover:bg-[var(--color-component-surface-muted)]"
         >
           Fermer (Échap)
         </button>

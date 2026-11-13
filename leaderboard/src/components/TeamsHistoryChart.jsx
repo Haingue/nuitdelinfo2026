@@ -8,24 +8,24 @@ const METRICS = [
 ]
 
 const TEAM_COLORS = [
-  '#34d399',
-  '#38bdf8',
-  '#fbbf24',
-  '#fb7185',
-  '#c084fc',
-  '#2dd4bf',
-  '#f97316',
-  '#a3e635',
-  '#818cf8',
-  '#e879f9',
-  '#facc15',
-  '#60a5fa',
-  '#fda4af',
-  '#4ade80',
-  '#22d3ee',
-  '#fdba74',
-  '#a78bfa',
-  '#bef264',
+  'var(--color-core-red-500)',
+  'var(--color-core-blue-500)',
+  'var(--color-core-green-700)',
+  'var(--color-core-copper-500)',
+  'var(--color-core-indigo-400)',
+  'var(--color-core-teal-1400)',
+  'var(--color-core-yellow-700)',
+  'var(--color-core-red-700)',
+  'var(--color-core-blue-600)',
+  'var(--color-core-green-600)',
+  'var(--color-core-copper-400)',
+  'var(--color-core-indigo-500)',
+  'var(--color-core-teal-1200)',
+  'var(--color-core-yellow-600)',
+  'var(--color-core-red-300)',
+  'var(--color-core-blue-400)',
+  'var(--color-core-aqua-1100)',
+  'var(--color-core-grey-800)',
 ]
 
 const W = 960
@@ -100,7 +100,7 @@ export default function TeamsHistoryChart({ history, metric }) {
   const allPoints = teams.flatMap((team) => team.points)
   if (allPoints.length === 0) {
     return (
-      <p className="py-16 text-center text-sm text-slate-500">
+      <p className="py-16 text-center text-sm text-[var(--color-foreground-secondary)]">
         Aucune donnée historique disponible.
       </p>
     )
@@ -142,14 +142,14 @@ export default function TeamsHistoryChart({ history, metric }) {
                 x2={W - PAD.right}
                 y1={y(tick)}
                 y2={y(tick)}
-                stroke="#263449"
+                stroke="var(--color-border-subtle)"
               />
               <text
                 x={PAD.left - 10}
                 y={y(tick) + 4}
                 textAnchor="end"
                 fontSize="11"
-                fill="#94a3b8"
+                fill="var(--color-foreground-secondary)"
               >
                 {tick.toFixed(1)}
               </text>
@@ -162,7 +162,7 @@ export default function TeamsHistoryChart({ history, metric }) {
                 x2={x(tick)}
                 y1={PAD.top}
                 y2={H - PAD.bottom}
-                stroke="#1e293b"
+                stroke="var(--color-border-subtle)"
                 strokeDasharray="3 6"
               />
               <text
@@ -170,7 +170,7 @@ export default function TeamsHistoryChart({ history, metric }) {
                 y={H - 20}
                 textAnchor="middle"
                 fontSize="11"
-                fill="#94a3b8"
+                fill="var(--color-foreground-secondary)"
               >
                 {formatTime(tick, usesClockMinutes)}
               </text>
@@ -206,18 +206,18 @@ export default function TeamsHistoryChart({ history, metric }) {
           ))}
         </svg>
       </div>
-      <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-slate-800 pt-4 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-[var(--color-border-subtle)] pt-4 sm:grid-cols-3 lg:grid-cols-4">
         {teams.map((team) => (
           <li
             key={team.name}
-            className="flex min-w-0 items-center gap-2 text-xs text-slate-300"
+            className="flex min-w-0 items-center gap-2 text-xs text-[var(--color-foreground-primary)]"
           >
             <span
               className="h-2 w-2 shrink-0 rounded-full"
               style={{ backgroundColor: team.color }}
             />
             <span className="truncate">{team.name}</span>
-            <span className="ml-auto font-mono text-slate-400">
+            <span className="ml-auto font-mono text-[var(--color-foreground-secondary)]">
               {team.points[team.points.length - 1].value}
             </span>
           </li>
