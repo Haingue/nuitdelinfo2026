@@ -4,6 +4,7 @@ Exécuteur de tests Node.js avec npm, yarn, pnpm et couverture LCOV
 
 import subprocess
 import json
+import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 from ..models import ProjectInfo, TestSuiteResult, TestStatus
@@ -146,6 +147,10 @@ def install_node_dependencies(project_path: Path, package_manager: str) -> int:
                 timeout=300,
             )
         
+        if result.returncode != 0:
+            stderr_tail = "\n".join((result.stderr or "").strip().splitlines()[-10:])
+            if stderr_tail:
+                print(f"❌ Échec de l'installation des dépendances Node:\n{stderr_tail}")
         return result.returncode
         
     except subprocess.TimeoutExpired:
@@ -254,7 +259,8 @@ def run_vitest_with_coverage(
     cmd = base_cmd + coverage_args
     
     try:
-        env = {"CI": "true"}
+        # Hériter de l'environnement (PATH…) en ajoutant CI=true
+        env = {**os.environ, "CI": "true"}
         result = subprocess.run(
             cmd,
             cwd=project_path,
@@ -314,7 +320,8 @@ def run_node_test_script(
         cmd = ["npm", "test"]
     
     try:
-        env = {"CI": "true"}
+        # Hériter de l'environnement (PATH…) en ajoutant CI=true
+        env = {**os.environ, "CI": "true"}
         result = subprocess.run(
             cmd,
             cwd=project_path,

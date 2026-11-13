@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import BreakdownChart from './BreakdownChart.jsx'
 import HistoryChart from './HistoryChart.jsx'
+import MascotCrossing from './MascotCrossing.jsx'
 
 export default function TeamDetail({ team, history, onClose }) {
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function TeamDetail({ team, history, onClose }) {
         rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-component-surface-subtle)] p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
+        <MascotCrossing />
         <div className="flex items-start justify-between">
           <h2 className="text-2xl font-black text-[var(--color-foreground-primary)]">{team.team}</h2>
           <div className="text-right">

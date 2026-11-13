@@ -89,11 +89,23 @@ chmod +x quality_factory/run.sh
 
 ### 2. Exécution avec Docker
 
+L'image est basée sur **`buildpack-deps:noble`** (image officielle Docker,
+Ubuntu 24.04 — même base que les runners `ubuntu-latest` de GitHub Actions) :
+elle fournit d'origine git, curl, build-essential et les bibliothèques de
+développement usuelles. Sont ajoutés : **Java 21** (+ Maven, Gradle 8.8),
+**Python 3.12** et **Node.js 22** (tarball officiel épinglé + pnpm).
+
 #### Build de l'image
 
 ```bash
+# Contexte de build = racine du dépôt
 docker build -t quality_factory -f quality_factory/Dockerfile .
 ```
+
+> **Proxy d'entreprise (inspection TLS)** : déposez les certificats CA du
+> proxy (`.crt`, PEM) dans [`certs/`](./certs/README.md) avant le build. Ils
+> sont intégrés au magasin système, au truststore Java et pris en compte par
+> npm/pnpm et pip. Sans certificat, le build fonctionne normalement.
 
 #### Exécution
 
@@ -105,6 +117,16 @@ docker run -v $(pwd):/workspace -v $(pwd)/coverage-artifacts:/coverage-artifacts
     --coverage-dir /coverage-artifacts \
     --results-file /workspace/test-results.json
 ```
+
+> **Windows (Docker Desktop)** : les bind mounts de chemins Windows ne
+> supportent pas les `rename` de répertoires utilisés par pnpm
+> (`ERR_PNPM_EACCES`). Pour tester en local, copiez le workspace dans le
+> filesystem du conteneur (comme le fera la CI) :
+>
+> ```powershell
+> docker run --rm -v "C:\chemin\projet:/mnt/src:ro" --entrypoint bash quality_factory `
+>     -c "cp -r /mnt/src /work && /opt/venv/bin/python3 -u /quality_factory/main.py --workspace /work --verbose"
+> ```
 
 ## 🔧 Options CLI
 

@@ -1,0 +1,9 @@
+# Contexte de build du Dockerfile de Quality Factory (racine du dépôt) :
+# seul quality_factory/ est copié dans l'image.
+*
+!quality_factory
+
+# Fichiers locaux inutiles dans l'image
+quality_factory/.venv
+quality_factory/**/__pycache__
+quality_factory/**/*.pyc

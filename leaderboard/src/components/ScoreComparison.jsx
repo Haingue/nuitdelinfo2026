@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import MascotCrossing from './MascotCrossing.jsx'
 import TeamsHistoryChart, { METRICS } from './TeamsHistoryChart.jsx'
 
 export default function ScoreComparison({ history }) {
@@ -25,9 +26,10 @@ export default function ScoreComparison({ history }) {
       </div>
       {isVisible && (
         <section
-          className="mb-8 rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-component-surface-subtle)] p-5"
+          className="relative mb-8 rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-component-surface-subtle)] p-5"
           aria-label="Comparaison des équipes par type de score"
         >
+          <MascotCrossing />
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-[var(--color-foreground-primary)]">
