@@ -9,6 +9,7 @@ import shlex
 import sys
 import threading
 from collections import deque
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional, Tuple, Callable
 
@@ -95,12 +96,14 @@ def run_command(
 
 
 
+@lru_cache(maxsize=None)
 def command_exists(command: str) -> bool:
-    """Vérifie si une commande existe dans le PATH"""
+    """Vérifie si une commande existe dans le PATH (résultat mis en cache)"""
     import shutil
     return shutil.which(command) is not None
 
 
+@lru_cache(maxsize=None)
 def find_java_executable() -> Optional[str]:
     """Trouve l'exécutable Java"""
     candidates = ["java", "java21", "java-21", "/usr/lib/jvm/java-21-bin/bin/java"]
@@ -130,6 +133,7 @@ def find_gradle_executable(project_path: Path) -> Optional[str]:
     return None
 
 
+@lru_cache(maxsize=None)
 def find_node_executable() -> Optional[str]:
     """Trouve l'exécutable Node"""
     candidates = ["node", "node20"]
@@ -152,6 +156,7 @@ def find_node_executable() -> Optional[str]:
     return None
 
 
+@lru_cache(maxsize=None)
 def find_pnpm_executable() -> Optional[str]:
     if command_exists("pnpm"):
         return "pnpm"
@@ -170,6 +175,7 @@ def find_pnpm_executable() -> Optional[str]:
     return None
 
 
+@lru_cache(maxsize=None)
 def find_npm_executable() -> Optional[str]:
     """Trouve l'exécutable npm"""
     if command_exists("npm"):
@@ -177,6 +183,7 @@ def find_npm_executable() -> Optional[str]:
     return None
 
 
+@lru_cache(maxsize=None)
 def find_yarn_executable() -> Optional[str]:
     """Trouve l'exécutable yarn"""
     if command_exists("yarn"):

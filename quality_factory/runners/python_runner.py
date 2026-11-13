@@ -33,16 +33,18 @@ def run_python_tests(
     # Créer le dossier de couverture
     coverage_dir.mkdir(parents=True, exist_ok=True)
     
-    # Vérifier que Python est disponible
-    if not command_exists("python3") and not command_exists("python"):
+    # Vérifier que Python est disponible (une seule recherche, mise en cache)
+    if command_exists("python3"):
+        python_cmd = "python3"
+    elif command_exists("python"):
+        python_cmd = "python"
+    else:
         return TestSuiteResult(
             name=suite_name,
             status=TestStatus.FAILED,
             exit_code=1,
             error="Python non trouvé dans le PATH",
         )
-    
-    python_cmd = "python3" if command_exists("python3") else "python"
     
     try:
         # Étape 1: Installer les dépendances

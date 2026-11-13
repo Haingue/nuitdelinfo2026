@@ -4,25 +4,30 @@ Détection des projets Node.js
 
 import json
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from ..models import ProjectInfo, LanguageType
 from ..utils.path import IGNORED_DIRS, find_files_with_pattern
 
 
-def detect_node_projects(workspace: Path) -> List[ProjectInfo]:
+def detect_node_projects(
+    workspace: Path,
+    package_files: Optional[List[Path]] = None,
+) -> List[ProjectInfo]:
     """
     Détecte les projets Node.js avec un script de test
     
     Args:
         workspace: Répertoire racine
+        package_files: Fichiers package.json pré-collectés (évite une nouvelle traversée)
         
     Returns:
         Liste des projets Node détectés
     """
     projects = []
     
-    # Trouver tous les fichiers package.json
-    package_files = find_files_with_pattern(workspace, "package.json", IGNORED_DIRS)
+    # Trouver tous les fichiers package.json (si non fournis)
+    if package_files is None:
+        package_files = find_files_with_pattern(workspace, "package.json", IGNORED_DIRS)
     
     for package_file in package_files:
         # Vérifier si le package.json a un script 'test'

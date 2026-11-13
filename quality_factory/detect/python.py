@@ -3,12 +3,15 @@ Détection des projets Python
 """
 
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from ..models import ProjectInfo, LanguageType
-from ..utils.path import IGNORED_DIRS, PYTHON_MARKERS, find_files_with_pattern
+from ..utils.path import IGNORED_DIRS, PYTHON_MARKERS, find_files_with_patterns
 
 
-def detect_python_projects(workspace: Path) -> List[ProjectInfo]:
+def detect_python_projects(
+    workspace: Path,
+    test_files: Optional[List[Path]] = None,
+) -> List[ProjectInfo]:
     """
     Détecte les projets Python avec des tests
     
@@ -18,16 +21,17 @@ def detect_python_projects(workspace: Path) -> List[ProjectInfo]:
     
     Args:
         workspace: Répertoire racine
+        test_files: Fichiers de test pré-collectés (évite une nouvelle traversée)
         
     Returns:
         Liste des projets Python détectés
     """
     projects = []
     
-    # Trouver tous les fichiers de test Python
-    test_files = []
-    for pattern in ["test_*.py", "*_test.py"]:
-        test_files.extend(find_files_with_pattern(workspace, pattern, IGNORED_DIRS))
+    # Trouver tous les fichiers de test Python (une seule traversée si non fournis)
+    if test_files is None:
+        scan = find_files_with_patterns(workspace, ("test_*.py", "*_test.py"), IGNORED_DIRS)
+        test_files = scan["test_*.py"] + scan["*_test.py"]
     
     # Grouper les fichiers de test par racine de projet
     project_roots = set()

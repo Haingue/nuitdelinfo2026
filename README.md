@@ -107,3 +107,13 @@ Ce défi ne récompense pas la vitesse brute ni le volume de code. Il récompens
 Ce sont exactement les principes que nous appliquons chaque jour chez Toyota. Cette nuit, c'est votre tour.
 
 **Bonne nuit. Bonne production. 頑張って !**
+
+---
+
+## 📄 Licence
+
+Copyright © 2026 Fabien Haingue
+
+Ce projet est distribué sous licence [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).
+Vous êtes libre d'utiliser, modifier et redistribuer ce code, à condition que toute version
+modifiée — y compris hébergée en tant que service web — soit publiée sous la même licence.

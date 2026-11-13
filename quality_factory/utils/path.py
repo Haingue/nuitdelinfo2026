@@ -2,8 +2,10 @@
 Utilitaires pour la manipulation des chemins
 """
 
+import fnmatch
+import os
 from pathlib import Path
-from typing import Set, List, Optional
+from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple
 
 
 # Dossiers à ignorer lors de la détection
@@ -58,6 +60,67 @@ def is_ignored_dir(name: str) -> bool:
     return name in IGNORED_DIRS or name.startswith(".")
 
 
+def dir_matches_ignored(name: str, ignored_dirs: Optional[Set[str]] = None) -> bool:
+    """Vérifie si un nom de dossier correspond à un dossier ignoré (gère les globs comme *.egg-info)"""
+    if ignored_dirs is None:
+        ignored_dirs = IGNORED_DIRS
+    if name in ignored_dirs:
+        return True
+    return any(
+        fnmatch.fnmatch(name, pat)
+        for pat in ignored_dirs
+        if "*" in pat or "?" in pat
+    )
+
+
+def walk_pruned(
+    root: Path,
+    ignored_dirs: Optional[Set[str]] = None,
+) -> Iterator[Tuple[Path, List[str], List[str]]]:
+    """
+    Parcourt l'arborescence comme os.walk mais SANS descendre dans les
+    dossiers ignorés (node_modules, .git, target…), contrairement à rglob
+    qui parcourt tout puis filtre a posteriori.
+    
+    Args:
+        root: Répertoire racine
+        ignored_dirs: Dossiers à ignorer (par défaut: IGNORED_DIRS)
+        
+    Yields:
+        Tuples (dirpath, dirnames, filenames)
+    """
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Élagage en place: os.walk ne descendra pas dans ces dossiers
+        dirnames[:] = [d for d in dirnames if not dir_matches_ignored(d, ignored_dirs)]
+        yield Path(dirpath), dirnames, filenames
+
+
+def find_files_with_patterns(
+    root: Path,
+    patterns: Sequence[str],
+    ignored_dirs: Optional[Set[str]] = None,
+) -> Dict[str, List[Path]]:
+    """
+    Trouve les fichiers correspondant à plusieurs patterns en UNE SEULE
+    traversée de l'arborescence (avec élagage des dossiers ignorés).
+    
+    Args:
+        root: Répertoire racine
+        patterns: Patterns de fichiers (ex: ["*.py", "pom.xml"])
+        ignored_dirs: Dossiers à ignorer (par défaut: IGNORED_DIRS)
+        
+    Returns:
+        Dictionnaire pattern -> liste des chemins des fichiers
+    """
+    results: Dict[str, List[Path]] = {pattern: [] for pattern in patterns}
+    for dirpath, _dirnames, filenames in walk_pruned(root, ignored_dirs):
+        for filename in filenames:
+            for pattern in patterns:
+                if fnmatch.fnmatch(filename, pattern):
+                    results[pattern].append(dirpath / filename)
+    return results
+
+
 def find_files_with_pattern(root: Path, pattern: str, ignored_dirs: Optional[Set[str]] = None) -> List[Path]:
     """
     Trouve tous les fichiers correspondant à un pattern
@@ -70,16 +133,7 @@ def find_files_with_pattern(root: Path, pattern: str, ignored_dirs: Optional[Set
     Returns:
         Liste des chemins des fichiers
     """
-    if ignored_dirs is None:
-        ignored_dirs = IGNORED_DIRS
-    
-    result = []
-    for path in root.rglob(pattern):
-        if path.is_file():
-            # Vérifier que le chemin ne passe pas par un dossier ignoré
-            if not any(part in ignored_dirs for part in path.parts):
-                result.append(path)
-    return result
+    return find_files_with_patterns(root, (pattern,), ignored_dirs)[pattern]
 
 
 def find_project_roots(root: Path, markers: Set[str], ignored_dirs: Optional[Set[str]] = None) -> Set[Path]:
