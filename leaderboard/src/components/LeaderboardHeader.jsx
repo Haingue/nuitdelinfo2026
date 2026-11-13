@@ -47,6 +47,21 @@ export default function LeaderboardHeader({ lastUpdate }) {
               maj {lastUpdate.toLocaleTimeString('fr-FR')}
             </div>
           )}
+          <a
+            className="toyota-link"
+            href="https://www.toyota.fr/production-valenciennes"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="En savoir plus sur Toyota Motor Manufacturing France (nouvel onglet)"
+          >
+            <img
+              className="toyota-link-logo"
+              src={`${import.meta.env.BASE_URL}logo_toyota.png`}
+              alt=""
+              draggable="false"
+            />
+            <span className="toyota-link-label">En savoir plus</span>
+          </a>
         </div>
       </div>
     </header>

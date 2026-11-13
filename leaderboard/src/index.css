@@ -3,6 +3,36 @@
     align-items: center;
     gap: 24px;
 }
+.toyota-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+    border-radius: 8px;
+    background: var(--color-component-surface, #fff);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-foreground-secondary, #555);
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease;
+}
+.toyota-link:hover,
+.toyota-link:focus-visible {
+    border-color: #eb0a1e;
+    color: var(--color-foreground-primary, #111);
+    box-shadow: 0 2px 8px rgba(235, 10, 30, 0.15);
+}
+.toyota-link-logo {
+    /* logo très large (ratio ~6.5:1) : hauteur fixe, largeur auto */
+    height: 14px;
+    width: auto;
+    display: block;
+}
 .header-mascots {
     display: flex;
     align-items: center;
@@ -117,6 +147,12 @@
     .mascot {
         width: 54px;
         height: 48px;
+    }
+    .toyota-link-label {
+        display: none;
+    }
+    .toyota-link {
+        padding: 8px 10px;
     }
 }
 @media (prefers-reduced-motion: reduce) {
