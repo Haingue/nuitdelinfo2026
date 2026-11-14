@@ -11,7 +11,7 @@ const MASCOTS = [
 
 export default function MascotCrossing() {
   const [mascot] = useState(() => {
-    if (Math.random() >= 1 / 1) return null
+    if (Math.random() >= 1 / 10) return null
     return MASCOTS[Math.floor(Math.random() * MASCOTS.length)]
   })
   const [loaded, setLoaded] = useState(false)
