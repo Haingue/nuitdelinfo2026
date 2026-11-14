@@ -53,6 +53,26 @@ def check_coverage_reports(coverage_dir: Path) -> None:
     sys.stdout.flush()
 
 
+def validate_token(host: str, token: str) -> bool:
+    """
+    Valide le token SonarCloud avant le scan.
+
+    Le scanner 6.x contacte api.sonarcloud.io dès le bootstrap : un token
+    invalide y provoque un 403 obscur (« Error status returned by url
+    [.../analysis/jres]: 403 »). On vérifie donc le token en amont pour
+    produire un message actionnable. En cas d'erreur réseau, on laisse
+    passer (le scanner tranchera).
+    """
+    request = Request(f"{host}/api/authentication/validate")
+    request.add_header("Authorization", f"Bearer {token}")
+    try:
+        with urlopen(request, timeout=30) as response:
+            return bool(json.load(response).get("valid"))
+    except (HTTPError, URLError, TimeoutError, ValueError):
+        print("::warning::Impossible de valider le SONAR_TOKEN (erreur réseau); poursuite du scan.")
+        return True
+
+
 def run_scanner(project_key: str, organization: str, host: str, coverage_dir: Path) -> int:
     """Lance sonar-scanner avec le paramétrage imposé. Retourne le code de sortie."""
     command = [
@@ -60,6 +80,7 @@ def run_scanner(project_key: str, organization: str, host: str, coverage_dir: Pa
         f"-Dsonar.projectKey={project_key}",
         f"-Dsonar.organization={organization}",
         f"-Dsonar.host.url={host}",
+        "-Dsonar.scanner.skipJreProvisioning=true",
         "-Dsonar.sources=.",
         f"-Dsonar.exclusions={SONAR_EXCLUSIONS}",
         f"-Dsonar.coverage.exclusions={SONAR_COVERAGE_EXCLUSIONS}",
@@ -163,6 +184,7 @@ def export_report(
     branch: str,
     metadata: dict,
     output: Path,
+    extra_errors: list = None,
 ) -> None:
     """Exporte le rapport d'analyse SonarCloud (Quality Gate, mesures, issues)."""
     project_key = repository.replace("/", "_")
@@ -176,7 +198,7 @@ def export_report(
         "quality_gate": None,
         "measures": None,
         "issues": {"total": 0, "items": [], "truncated": False},
-        "errors": [],
+        "errors": list(extra_errors or []),
     }
 
     if not metadata:
@@ -224,11 +246,11 @@ def export_report(
             )
         except (HTTPError, URLError, TimeoutError, ValueError) as error:
             report["errors"].append(f"issues: {type(error).__name__}")
-    elif not token:
+    elif not token and not extra_errors:
         report["errors"].append("Sonar token unavailable to export step.")
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Rapport SonarCloud écrit: {output} ({len(report['issues']['items'])} issues exportées).")
 
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
@@ -292,33 +314,44 @@ def main() -> int:
 
     os.chdir(workspace)
 
-    # 1. Rapports de couverture disponibles ?
     check_coverage_reports(workspace / coverage_dir)
 
-    # 2. Scan (paramétrage imposé)
-    scanner_exit = run_scanner(project_key, args.organization, host, coverage_dir)
-    if scanner_exit != 0:
-        print(f"::error::sonar-scanner a échoué (code de sortie {scanner_exit}).")
+    token_error = None
+    if not token:
+        token_error = (
+            "SONAR_TOKEN absent. Créez un token sur sonarcloud.io "
+            "(Mon compte → Sécurité) et ajoutez-le en secret SONAR_TOKEN du repo."
+        )
+    elif not validate_token(host, token):
+        token_error = (
+            "SONAR_TOKEN invalide ou expiré (rejeté par SonarCloud). "
+            "Régénérez un token sur sonarcloud.io (Mon compte → Sécurité) "
+            "et mettez à jour le secret SONAR_TOKEN du repo."
+        )
+    if token_error:
+        print(f"::error::{token_error}")
+
+    scanner_exit = 1
+    if token_error is None:
+        scanner_exit = run_scanner(project_key, args.organization, host, coverage_dir)
+        if scanner_exit != 0:
+            print(f"::error::sonar-scanner a échoué (code de sortie {scanner_exit}).")
 
     metadata = read_scan_metadata(workspace)
 
-    # 3. Quality Gate (bloquant = Jidoka)
     gate_ok = False
     if scanner_exit == 0:
-        if token:
-            gate_ok = check_quality_gate(host, token, metadata)
-        else:
-            print("::error::SONAR_TOKEN absent: impossible de vérifier le Quality Gate.")
+        gate_ok = check_quality_gate(host, token, metadata)
 
-    # 4. Export du rapport d'analyse (toujours, même en cas d'échec en amont)
     export_report(
         host=host,
-        token=token,
+        token=token if token_error is None else "",
         repository=args.repository,
         organization=args.organization,
         branch=args.branch,
         metadata=metadata,
         output=output,
+        extra_errors=[token_error] if token_error else None,
     )
 
     return 0 if (scanner_exit == 0 and gate_ok) else 1

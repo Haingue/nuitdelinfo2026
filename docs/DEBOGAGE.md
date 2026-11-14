@@ -50,6 +50,11 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 - **Cause** : le secret `SONAR_TOKEN` est absent, expiré, ou n'a pas les droits sur le projet.
 - **À faire** : sur sonarcloud.io → _Mon compte → Sécurité_ → générez un token (_Analyze projects_) → dans votre repo GitHub : Settings → Secrets and variables → Actions → New repository secret → nom **`SONAR_TOKEN`** (exactement, en majuscules). Relancez.
 
+### ❌ `SONAR_TOKEN invalide ou expiré` / `Error status returned by url [https://api.sonarcloud.io/...]: 403`
+
+- **Cause** : le secret `SONAR_TOKEN` contient un token rejeté par SonarCloud (invalide, expiré, révoqué, ou copié avec des espaces/retours à la ligne). Le scanner le présente dès son démarrage à `api.sonarcloud.io`, d'où un 403 avant même l'analyse.
+- **À faire** : régénérez un token sur sonarcloud.io (_Mon compte → Sécurité_) et remplacez la valeur du secret `SONAR_TOKEN` de votre repo (Settings → Secrets and variables → Actions). Collez le token **sans espace ni retour à la ligne**. Relancez.
+
 ### ❌ `You are running CI analysis while Automatic Analysis is enabled`
 
 - **Cause** : à l'import de votre repo, SonarCloud active par défaut son propre scan automatique (« Automatic Analysis »). Il entre en conflit avec le scan lancé par le workflow Toyota.
