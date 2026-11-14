@@ -20,6 +20,19 @@ from quality_factory.utils.github import error, set_output, warning
 MIN_COMMITS = 20
 
 
+def ensure_safe_directory(workspace: Path) -> None:
+    """Déclare le workspace comme safe.directory pour git.
+
+    Dans un job container GitHub Actions, le checkout appartient à l'UID du
+    runner (différent de l'utilisateur du container) : sans cette exception,
+    git refuse d'opérer ("detected dubious ownership"). Non bloquant.
+    """
+    subprocess.run(
+        ["git", "config", "--global", "--add", "safe.directory", str(workspace)],
+        capture_output=True, text=True,
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Quality Factory - Heijunka (régularité des commits)"
@@ -27,6 +40,8 @@ def main() -> int:
     parser.add_argument("--workspace", type=Path, default=Path.cwd())
     args = parser.parse_args()
     workspace = args.workspace.resolve()
+
+    ensure_safe_directory(workspace)
 
     count_result = subprocess.run(
         ["git", "rev-list", "--count", "HEAD"],
