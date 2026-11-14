@@ -2,13 +2,27 @@
 
 Usine de tests pour le challenge **Nuit de l'Info 2026** - Toyota Production System
 
-Ce module contient toute la logique de détection et d'exécution des tests pour les projets **Java**, **Python** et **Node.js**.
+Ce module contient toute la logique du workflow `quality.yml` : un script par job, exécuté dans l'image Docker (qui embarque Java 21, Maven, Gradle, Node + pnpm, Python, **sonar-scanner** et **Trivy**).
+
+| Job du workflow | Script |
+|---|---|
+| `conformite` | `conformite.py` — fichier d'équipe, empreinte, bloc d'appel, repo public |
+| `sonar` | `sonar.py` — scan SonarCloud, Quality Gate, export du rapport |
+| `tests` | `tests.py` — détection + exécution des suites avec couverture, sortie `status` |
+| `dependances` | `dependances.py` — pré-résolution Maven, Trivy, métriques |
+| `rythme` | `rythme.py` — comptage des commits, export de l'historique |
+| `rapport` | `rapport.py` — synthèse et score officiel dans le résumé de la run |
 
 ## 📁 Structure
 
 ```
 quality_factory/
-├── main.py                 # Point d'entrée principal
+├── conformite.py           # Job conformite (Jidoka)
+├── sonar.py                # Job sonar (scan + Quality Gate + rapport)
+├── tests.py                # Job tests (détection + exécution des suites)
+├── dependances.py          # Job dependances (Maven go-offline + Trivy)
+├── rythme.py               # Job rythme (Heijunka)
+├── rapport.py              # Job rapport (résumé de la run)
 ├── config.py              # Configuration centrale
 ├── models.py              # Modèles de données
 ├── detect/
@@ -25,6 +39,7 @@ quality_factory/
 ├── utils/
 │   ├── __init__.py
 │   ├── command.py          # Utilitaires pour les commandes
+│   ├── github.py           # Utilitaires GitHub Actions (outputs, summary)
 │   └── path.py             # Utilitaires pour les chemins
 ├── requirements.txt        # Dépendances Python
 ├── run.sh                 # Script d'exécution
@@ -60,13 +75,13 @@ pip install -r quality_factory/requirements.txt
 
 ```bash
 # Mode normal (détection + exécution)
-python3 quality_factory/main.py --workspace /chemin/du/projet
+python3 quality_factory/tests.py --workspace /chemin/du/projet
 
 # Mode dry-run (détection uniquement)
-python3 quality_factory/main.py --workspace /chemin/du/projet --dry-run
+python3 quality_factory/tests.py --workspace /chemin/du/projet --dry-run
 
 # Avec toutes les options
-python3 quality_factory/main.py \
+python3 quality_factory/tests.py \
     --workspace /chemin/du/projet \
     --coverage-dir /chemin/des/rapports \
     --results-file /chemin/du/rapport.json \
@@ -125,7 +140,7 @@ docker run -v $(pwd):/workspace -v $(pwd)/coverage-artifacts:/coverage-artifacts
 >
 > ```powershell
 > docker run --rm -v "C:\chemin\projet:/mnt/src:ro" --entrypoint bash quality_factory `
->     -c "cp -r /mnt/src /work && /opt/venv/bin/python3 -u /quality_factory/main.py --workspace /work --verbose"
+>     -c "cp -r /mnt/src /work && /opt/venv/bin/python3 -u /quality_factory/tests.py --workspace /work --verbose"
 > ```
 
 ## 🔧 Options CLI
@@ -138,6 +153,33 @@ docker run -v $(pwd):/workspace -v $(pwd)/coverage-artifacts:/coverage-artifacts
 | `--temp-dir` | Dossier temporaire | `/tmp` |
 | `--dry-run` | Mode test: détection uniquement | - |
 | `--verbose` | Mode verbeux | - |
+
+## 🔎 Scan SonarCloud (`sonar.py`)
+
+`sonar.py` reproduit le job `sonar` du workflow `quality.yml` :
+1. vérifie la présence des rapports de couverture (avertit sinon),
+2. lance `sonar-scanner` avec le paramétrage imposé (exclusions et chemins de couverture non configurables),
+3. vérifie le Quality Gate (bloquant : code de sortie non nul si rouge),
+4. exporte le rapport d'analyse (`sonar-analysis/report.json`) : Quality Gate, mesures et issues.
+
+```bash
+export SONAR_TOKEN=xxxx
+python3 quality_factory/sonar.py \
+  --workspace . \
+  --repository owner/repo \
+  --organization mon-org-sonarcloud \
+  --branch main
+```
+
+| Option | Description | Défaut |
+|--------|-------------|--------|
+| `--workspace` | Répertoire de travail | Répertoire courant |
+| `--repository` | Dépôt GitHub `owner/repo` (clé projet Sonar dérivée) | requis |
+| `--organization` | Organisation SonarCloud de l'équipe | requis |
+| `--host` | URL du serveur SonarCloud | `https://sonarcloud.io` |
+| `--branch` | Branche analysée (dashboard + export) | `main` |
+| `--coverage-dir` | Dossier des rapports de couverture | `<workspace>/coverage-artifacts` |
+| `--output` | Fichier de sortie du rapport JSON | `<workspace>/sonar-analysis/report.json` |
 
 ## 📊 Format du rapport
 
@@ -252,7 +294,7 @@ mkdir -p node_project
 echo '{"scripts": {"test": "echo test"}}' > node_project/package.json
 
 # Exécuter Quality Factory
-python3 /chemin/vers/quality_factory/main.py --workspace /tmp/test_project --dry-run
+python3 /chemin/vers/quality_factory/tests.py --workspace /tmp/test_project --dry-run
 ```
 
 ## 📝 Notes

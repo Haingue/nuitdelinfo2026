@@ -1,7 +1,6 @@
 name: Quality Factory — Build & Publish de l'image
 
 on:
-  # Déclenchement UNIQUEMENT manuel (bouton "Run workflow" dans l'onglet Actions).
   workflow_dispatch:
 
 env:
@@ -32,8 +31,6 @@ jobs:
       - name: Construire et pousser l'image
         uses: docker/build-push-action@v6
         with:
-          # Contexte = racine du dépôt (requis par le Dockerfile, qui copie
-          # quality_factory/ depuis la racine).
           context: .
           file: quality_factory/Dockerfile
           push: true

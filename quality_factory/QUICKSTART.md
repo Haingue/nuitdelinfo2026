@@ -9,10 +9,10 @@ Pour tester **immédiatement** les scripts sans conteneur :
 cd /chemin/vers/ton/projet
 
 # 2. Exécuter Quality Factory en mode dry-run (détection seulement)
-python3 /chemin/vers/quality_factory/main.py --workspace . --dry-run
+python3 /chemin/vers/quality_factory/tests.py --workspace . --dry-run
 
 # 3. Exécuter avec tests réels
-python3 /chemin/vers/quality_factory/main.py --workspace .
+python3 /chemin/vers/quality_factory/tests.py --workspace .
 
 # 4. Voir les résultats
 cat test-results.json
@@ -24,17 +24,17 @@ cat test-results.json
 
 ### Mode détection uniquement (sans exécuter les tests)
 ```bash
-python3 quality_factory/main.py --workspace . --dry-run
+python3 quality_factory/tests.py --workspace . --dry-run
 ```
 
 ### Exécution complète avec logs détaillés
 ```bash
-python3 quality_factory/main.py --workspace . --verbose
+python3 quality_factory/tests.py --workspace . --verbose
 ```
 
 ### Spécifier un dossier de couverture personnalisé
 ```bash
-python3 quality_factory/main.py \
+python3 quality_factory/tests.py \
     --workspace . \
     --coverage-dir ./mon_dossier_couverture \
     --results-file ./mon_rapport.json
@@ -89,10 +89,10 @@ echo 'package com.example; public class ExampleTest { public void test() {} }' >
 
 ```bash
 # Depuis le repo nuitdelinfo2026
-python3 quality_factory/main.py --workspace /tmp/test_quality_factory --dry-run
+python3 quality_factory/tests.py --workspace /tmp/test_quality_factory --dry-run
 
 # Si tout est bon, exécuter les tests
-python3 quality_factory/main.py --workspace /tmp/test_quality_factory
+python3 quality_factory/tests.py --workspace /tmp/test_quality_factory
 ```
 
 ---
@@ -147,12 +147,12 @@ chmod +x java_app/mvnw
 
 ### Voir les logs détaillés
 ```bash
-python3 quality_factory/main.py --workspace . --verbose
+python3 quality_factory/tests.py --workspace . --verbose
 ```
 
 ### Tester uniquement la détection
 ```bash
-python3 quality_factory/main.py --workspace . --dry-run --verbose
+python3 quality_factory/tests.py --workspace . --dry-run --verbose
 ```
 
 ### Vérifier les imports

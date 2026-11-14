@@ -37,7 +37,7 @@ echo "⚙️  Exécution de Quality Factory..."
 echo ""
 
 # Exécuter le script principal
-python3 "$SCRIPT_DIR/main.py" \
+python3 "$SCRIPT_DIR/tests.py" \
     --workspace "$WORKSPACE" \
     --coverage-dir "$WORKSPACE/coverage-artifacts" \
     --results-file "$WORKSPACE/test-results.json" \

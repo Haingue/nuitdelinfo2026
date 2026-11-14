@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-Point d'entrée principal pour Quality Factory
+Tests — validation du projet pour Quality Factory.
 
-Ce script orchestré la détection et l'exécution des tests
-pour les projets Java, Python et Node.js.
+Point d'entrée du job `tests` du workflow quality.yml : orchestre la
+détection et l'exécution des suites de tests pour les projets Java, Python
+et Node.js (avec couverture), génère test-results.json puis publie le statut
+global (`passed`/`failed`/`not_found`) comme sortie de step GitHub Actions.
 """
 
 import argparse
@@ -11,18 +13,17 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 # Ajouter le répertoire parent au path pour les imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from quality_factory.config import Config
-from quality_factory.models import DetectionResult, ExecutionReport, TestStatus, TestSuiteResult
+from quality_factory.models import TestStatus, TestSuiteResult
 from quality_factory.detect import detect_all_projects
 from quality_factory.runners.python_runner import run_python_tests
 from quality_factory.runners.java_runner import run_java_tests
 from quality_factory.runners.node_runner import run_node_tests
 from quality_factory.utils.command import find_node_executable
+from quality_factory.utils.github import set_output
 from quality_factory.report import generate_report, save_report, print_summary
 
 
@@ -88,7 +89,6 @@ def main():
         temp_dir = args.temp_dir.resolve()
     else:
         import tempfile
-        import sys
         # Sur Windows, /tmp n'existe pas
         if sys.platform == "win32":
             temp_dir = Path(tempfile.gettempdir())
@@ -233,6 +233,9 @@ def main():
     
     # Afficher le résumé
     print_summary(report)
+    
+    # Publier le statut global comme sortie de step GitHub Actions
+    set_output("status", report.status.value)
     
     # Afficher les erreurs éventuelles
     for result in suite_results:

@@ -82,6 +82,33 @@ RUN curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSIO
 ENV GRADLE_HOME=/opt/gradle
 ENV PATH="$GRADLE_HOME/bin:$PATH"
 
+# --- SonarScanner CLI ---------------------------------------------------------
+# Distribution générique (sans JRE embarqué) : indépendante de l'architecture,
+# elle s'appuie sur le JDK 21 de l'image via JAVA_HOME.
+ENV SONAR_SCANNER_VERSION=6.1.0.4477
+RUN curl -fsSL "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}.zip" -o /tmp/sonar-scanner.zip && \
+    echo "6928d282b22381d37865c725293f8d03613f81104bc2461ed3318fac2f345cdc  /tmp/sonar-scanner.zip" | sha256sum -c - && \
+    unzip -q /tmp/sonar-scanner.zip -d /opt && \
+    rm /tmp/sonar-scanner.zip && \
+    ln -s /opt/sonar-scanner-${SONAR_SCANNER_VERSION} /opt/sonar-scanner
+
+ENV PATH="/opt/sonar-scanner/bin:$PATH"
+
+# --- Trivy (audit supply chain) -----------------------------------------------
+# Binaire officiel épinglé + vérification via le fichier de checksums publié.
+ENV TRIVY_VERSION=0.76.2
+RUN ARCH="$(dpkg --print-architecture)" && \
+    case "$ARCH" in \
+      amd64) TRIVY_ARCH=64bit ;; \
+      arm64) TRIVY_ARCH=ARM64 ;; \
+      *) echo "Architecture non supportée : $ARCH" >&2; exit 1 ;; \
+    esac && \
+    curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz" -o /tmp/trivy.tar.gz && \
+    curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_checksums.txt" -o /tmp/trivy_checksums.txt && \
+    awk -v f="trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz" '$2==f {print $1"  /tmp/trivy.tar.gz"}' /tmp/trivy_checksums.txt | sha256sum -c - && \
+    tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy && \
+    rm /tmp/trivy.tar.gz /tmp/trivy_checksums.txt
+
 # --- Quality Factory --------------------------------------------------------
 WORKDIR /quality_factory
 
@@ -103,8 +130,14 @@ RUN set -eux; \
     npm --version; \
     pnpm --version; \
     python3 --version; \
-    pytest --version
+    pytest --version; \
+    sonar-scanner --version; \
+    trivy --version
 
 # --- Point d'entrée ----------------------------------------------------------
-ENTRYPOINT ["/opt/venv/bin/python3", "-u", "/quality_factory/main.py"]
+# Utile uniquement en usage standalone (`docker run ... --workspace /work`) :
+# lorsqu'elle sert de `container:` à un job GitHub Actions, l'image est
+# démarrée avec la commande du runner et l'ENTRYPOINT est ignoré (chaque step
+# est exécuté via `docker exec`).
+ENTRYPOINT ["/opt/venv/bin/python3", "-u", "/quality_factory/tests.py"]
 CMD ["--help"]
