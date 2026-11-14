@@ -2,26 +2,26 @@
   {
     "team": "Le test de TMMF",
     "repo": "Haingue/test-nuitdelinfo2026",
-    "score": 41.97,
+    "score": 41.7,
     "breakdown": {
-      "qualite": 33.33,
+      "qualite": 32.87,
       "pente": 0,
       "resilience": 10.0,
-      "heijunka": 8.64,
+      "heijunka": 8.83,
       "bonus_malus": -10.0
     },
     "eligible": false,
-    "timestamp": "2026-11-14T17:57:53.354295+00:00",
+    "timestamp": "2026-11-14T20:29:07.906216+00:00",
     "details": {
       "measures": {
-        "coverage": "50.0",
+        "coverage": "47.2",
         "code_smells": "0",
         "security_rating": "1.0",
         "sqale_debt_ratio": "0.0",
         "sqale_index": "0",
         "sqale_rating": "1.0"
       },
-      "commits": 27,
+      "commits": 30,
       "window_start": "2026-10-29T16:00:00+01:00",
       "recoveries": 4,
       "identity": {
@@ -43,13 +43,13 @@
         "maintainability_rating": "A",
         "security": 10,
         "security_rating": "A",
-        "coverage": 8.33,
-        "coverage_percent": 50.0,
+        "coverage": 7.87,
+        "coverage_percent": 47.2,
         "technical_debt_minutes": 0.0,
         "technical_debt_ratio_percent": 0.0,
         "code_smells": 0.0,
         "supply_chain": 0,
-        "total": 33.33
+        "total": 32.87
       },
       "supply_chain": {
         "critical": -1,
