@@ -30,7 +30,7 @@ SONAR_EXCLUSIONS = (
     "coverage-artifacts/**,**/dto/**,**/entity/**,**/model/**"
 )
 SONAR_COVERAGE_EXCLUSIONS = (
-    "**/*.spec.*,**/tests/**,coverage-artifacts/**,**/dto/**,**/entity/**,**/model/**"
+    "**/*.spec.*,**/test/**,**/tests/**,coverage-artifacts/**,**/dto/**,**/entity/**,**/model/**"
 )
 QUALITY_GATE_TIMEOUT = 300  # 5 minutes, comme le timeout du step historique
 QUALITY_GATE_POLL_INTERVAL = 5
