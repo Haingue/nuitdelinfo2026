@@ -238,6 +238,18 @@ class TestSuiteResultsTests(unittest.TestCase):
         self.assertIsNone(scoring.sonar_rating_letter('2.5'))
         self.assertEqual(scoring.sonar_rating_letter('5.0'), 'E')
 
+    def test_gate_fetch_tolerates_http_errors_without_parsing_body(self):
+        response = Mock(status_code=401)
+        response.json.side_effect = json.JSONDecodeError('Expecting value', '', 0)
+        with patch.object(scoring, 'sonar_get', return_value=response):
+            self.assertFalse(scoring.fetch_gate_current(self.team, 'token'))
+
+    def test_workflow_runs_fetch_tolerates_http_errors_without_parsing_body(self):
+        response = Mock(status_code=401)
+        response.json.side_effect = json.JSONDecodeError('Expecting value', '', 0)
+        with patch.object(scoring, 'gh_get', return_value=response):
+            self.assertEqual(scoring.fetch_workflow_runs(self.team, 'token'), [])
+
     def test_quality_fetch_requests_scored_and_technical_debt_metrics(self):
         response = Mock(status_code=200)
         response.json.return_value = {'component': {'measures': []}}

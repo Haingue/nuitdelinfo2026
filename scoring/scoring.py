@@ -158,6 +158,10 @@ def fetch_gate_current(team: Team, token: str) -> bool:
     r = sonar_get("/qualitygates/project_status", token,
                   projectKey=team.project_key, organization=team.sonar_org,
                   branch="main")
+    if r.status_code != 200:
+        logger.warning("[%s] Quality Gate indisponible : HTTP %s",
+                       team.repo_full, r.status_code)
+        return False
     status = r.json().get("projectStatus", {}).get("status")
     logger.debug("[%s] Quality Gate : %s", team.repo_full, status or "indisponible")
     return status == "OK"
@@ -209,6 +213,10 @@ def fetch_workflow_runs(team: Team, token: str) -> list[dict]:
     """Runs du workflow d'appel : base de la résilience Jidoka."""
     r = gh_get(f"{GITHUB_API}/repos/{team.repo_full}/actions/runs", token,
                per_page=100, status="completed")
+    if r.status_code != 200:
+        logger.warning("[%s] Runs CI indisponibles : HTTP %s",
+                       team.repo_full, r.status_code)
+        return []
     return [run for run in r.json().get("workflow_runs", [])
             if run["name"] == "TPS Challenge — Appel de l'usine qualité"]
 
