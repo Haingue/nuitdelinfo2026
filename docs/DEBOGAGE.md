@@ -78,9 +78,9 @@ Ouvrez l'onglet **Actions** de votre repo → cliquez sur la run `TPS Challenge 
 
 ### ⚠️ `[pom] Dependency version cannot be determined. Child dependencies will not be found.`
 
-Le scan Trivy a démarré, mais certaines versions Maven restent inconnues : les dépendances transitives de ces entrées ne seront pas analysées. Le workflow tente d'abord de pré-résoudre le modèle Maven et ses dépendances pour que Trivy les trouve dans le cache local. Une erreur Maven Central `429 Too Many Requests`, un parent POM inaccessible ou une version définie par une propriété non résolue peut encore laisser l'inventaire incomplet.
+Le scan Trivy a démarré, mais certaines versions Maven restent inconnues : les dépendances transitives de ces entrées ne seront pas analysées. Le workflow pré-résout d'abord le modèle Maven et ses dépendances (avec cache CI de `~/.m2`) pour que Trivy les trouve dans le cache local. Une erreur Maven Central `429 Too Many Requests` lors de la pré-résolution, un parent POM inaccessible ou une version définie par une propriété non résolue peut encore laisser l'inventaire incomplet.
 
-Le job affiche alors `versions manquantes` dans son résumé. Le calcul du score traite un rapport avec des dépendances sans version comme incomplet : il ne crédite pas les 5 points supply chain. Le scanner ne fonctionne pas en mode hors-ligne; la base de vulnérabilités Trivy et, si nécessaire, les métadonnées Maven sont téléchargées.
+Le job affiche alors `versions manquantes` dans son résumé. Le calcul du score traite un rapport avec des dépendances sans version comme incomplet : il ne crédite pas les 5 points supply chain. La base de vulnérabilités Trivy est téléchargée, mais le scanner tourne en `--offline-scan` côté Maven : il n'interroge jamais Maven Central lui-même (sinon un `429 Too Many Requests` — fréquent depuis les IP partagées des runners GitHub — ferait échouer tout le job en erreur FATAL). Seule la pré-résolution Maven télécharge les métadonnées, et son échec n'est pas bloquant.
 
 Trivy en mode `fs` vérifie les dépendances/manifests pour les CVE et recherche les secrets dans les fichiers du dépôt. Ce n'est pas une analyse statique complète du code (SAST); les bugs et défauts de code sont couverts par SonarCloud.
 

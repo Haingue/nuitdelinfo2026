@@ -5,7 +5,10 @@ Supply chain — audit des dépendances pour Quality Factory.
 Reproduit le job `dependances` du workflow quality.yml :
 1. Pré-résout le modèle et les dépendances Maven (meilleure couverture Trivy),
    sans bloquer en cas d'échec.
-2. Lance Trivy (fs, vuln + secrets, HIGH/CRITICAL, rapport JSON).
+2. Lance Trivy (fs, vuln + secrets, HIGH/CRITICAL, rapport JSON) en
+   `--offline-scan` : la résolution Maven repose uniquement sur le cache local
+   (~/.m2) peuplé à l'étape 1, pour éviter les erreurs FATAL `429 Too Many
+   Requests` de Maven Central depuis les runners GitHub (IP partagées).
 3. Extrait les métriques supply chain (sorties `critical`/`high`, résumé).
 """
 
@@ -48,7 +51,10 @@ def preresolve_maven(workspace: Path) -> None:
     sys.stdout.flush()
     result = subprocess.run(command, cwd=project_dir)
     if result.returncode != 0:
-        warning("Pré-résolution Maven en échec; le scan Trivy peut être incomplet.")
+        warning(
+            "Pré-résolution Maven en échec; Trivy scanne hors-ligne et signalera "
+            "des versions non résolues (scan supply chain incomplet)."
+        )
 
 
 def run_trivy(workspace: Path, report_path: Path) -> int:
@@ -60,6 +66,10 @@ def run_trivy(workspace: Path, report_path: Path) -> int:
         "--format", "json",
         "--output", str(report_path),
         "--exit-code", "0",
+        # Jamais de requêtes vers Maven Central pendant le scan : un 429
+        # (Retry-After 1800s, IP partagée des runners) serait FATAL pour Trivy.
+        # La résolution s'appuie sur ~/.m2 peuplé par preresolve_maven().
+        "--offline-scan",
         ".",
     ]
     print(f"🔍 Lancement de Trivy: {' '.join(command)}")

@@ -177,11 +177,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Maven (~/.m2) pour la pré-résolution
+        # Recommandé par Trivy : évite de re-télécharger depuis Maven Central à
+        # chaque run (les IP partagées des runners se font bloquer en 429).
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: quality-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            quality-m2-
+
       - name: Audit supply chain (script Quality Factory)
         id: metrics
         # dependances.py pré-résout les dépendances Maven (non bloquant), lance
-        # Trivy (vuln + secrets HIGH/CRITICAL) puis publie les sorties
-        # critical/high et le résumé.
+        # Trivy (vuln + secrets HIGH/CRITICAL, hors-ligne côté Maven) puis
+        # publie les sorties critical/high et le résumé.
         run: |
           python3 /quality_factory/dependances.py \
             --workspace "$GITHUB_WORKSPACE" \
