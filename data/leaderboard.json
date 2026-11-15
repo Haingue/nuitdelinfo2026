@@ -2,16 +2,16 @@
   {
     "team": "Le test de TMMF",
     "repo": "Haingue/test-nuitdelinfo2026",
-    "score": 36.7,
+    "score": 41.7,
     "breakdown": {
       "qualite": 32.87,
       "pente": 0,
       "resilience": 10.0,
       "heijunka": 8.83,
-      "bonus_malus": -15.0
+      "bonus_malus": -10.0
     },
     "eligible": false,
-    "timestamp": "2026-11-15T06:30:06.857842+00:00",
+    "timestamp": "2026-11-15T14:15:31.592278+00:00",
     "details": {
       "measures": {
         "coverage": "47.2",
