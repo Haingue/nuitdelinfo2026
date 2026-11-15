@@ -149,6 +149,16 @@
       "resilience": 10.0,
       "heijunka": 8.83,
       "bonus_malus": -15.0
+    },
+    {
+      "ts": "2026-11-15T06:30:06.857828+00:00",
+      "scoring_version": 2,
+      "total": 36.7,
+      "qualite": 32.87,
+      "pente": 0,
+      "resilience": 10.0,
+      "heijunka": 8.83,
+      "bonus_malus": -15.0
     }
   ]
 }
