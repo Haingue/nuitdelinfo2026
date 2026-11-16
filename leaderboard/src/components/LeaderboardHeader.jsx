@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import KartGame from './kart-game/KartRacer'
 
-export default function LeaderboardHeader({ lastUpdate }) {
+export default function LeaderboardHeader ({ lastUpdate }) {
+  const [isOpen, setIsOpen] = useState(false)
   const [toyoyoLoaded, setToyoyoLoaded] = useState(false)
   const [toyayaLoaded, setToyayaLoaded] = useState(false)
 
@@ -40,12 +42,16 @@ export default function LeaderboardHeader({ lastUpdate }) {
           </div>
           {lastUpdate && (
             <div className="flex items-center gap-2 text-xs text-[var(--color-foreground-secondary)]">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-fill-success-default)] opacity-75" />
+              <span className="relative flex h-2 w-2" onClick={() => setIsOpen(true)}>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-fill-success-default)] opacity-75"/>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-fill-success-default)]" />
               </span>
               maj {lastUpdate.toLocaleTimeString('fr-FR')}
             </div>
+          )}
+          {/* Modale */}
+          {isOpen && (
+              <KartGame onClose={() => setIsOpen(false)} />
           )}
           <a
             className="toyota-link"
