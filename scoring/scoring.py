@@ -7,7 +7,7 @@ Pour chaque équipe inscrite (issues du repo), interroge les APIs SonarCloud
 et GitHub, applique le barème officiel et produit data/leaderboard.json.
 
 Barème (cf. énoncé) :
-    A. Qualité finale (60) : gate 20 + maintenabilité 15 + sécurité 10 + couverture 10 + supply chain 5
+  A. Qualité finale (60) : gate 20 + maintenabilité 15 + sécurité 10 + couverture 10 + supply chain 5
   B. Kaizen (40) : pente 20 + résilience 10 + heijunka 10
   C. Bonus/malus : +5 / +3 / -5 / -10
 
@@ -341,7 +341,7 @@ def score_team(team: Team, cfg) -> tuple[Score, dict]:
                   key=lambda r: r["created_at"])
     red, recoveries = 0, 0
     for run in runs:
-        if run["conclusion"] == "failure":
+        if run["conclusion"] == "failure": # TODO: check the test job result instead of the global result ?
             red += 1
         else:
             if red:
