@@ -2,28 +2,28 @@
   {
     "team": "Le test de TMMF",
     "repo": "Haingue/test-nuitdelinfo2026",
-    "score": 41.7,
+    "score": 74.62,
     "breakdown": {
-      "qualite": 32.87,
-      "pente": 0,
-      "resilience": 10.0,
-      "heijunka": 8.83,
-      "bonus_malus": -10.0
+      "qualite": 55,
+      "pente": 0.82,
+      "resilience": 10,
+      "heijunka": 8.8,
+      "bonus_malus": 0.0
     },
-    "eligible": false,
-    "timestamp": "2026-11-16T13:21:10.222187+00:00",
+    "eligible": true,
+    "timestamp": "2026-11-16T17:54:10.910615+00:00",
     "details": {
       "measures": {
-        "coverage": "47.2",
+        "coverage": "98.0",
         "code_smells": "0",
         "security_rating": "1.0",
         "sqale_debt_ratio": "0.0",
         "sqale_index": "0",
         "sqale_rating": "1.0"
       },
-      "commits": 30,
+      "commits": 31,
       "window_start": "2026-10-29T16:00:00+01:00",
-      "recoveries": 4,
+      "recoveries": 5,
       "identity": {
         "ok": true,
         "expected_hash": "934384f69d4163037c5f68087d2729567582fef78860be627aabf51c141f7f5d",
@@ -38,18 +38,18 @@
         "frameworks": "Java (/__w/test-nuitdelinfo2026/test-nuitdelinfo2026/fizzbuzz), Node (/__w/test-nuitdelinfo2026/test-nuitdelinfo2026/game-of-life)"
       },
       "quality_breakdown": {
-        "gate": 0,
+        "gate": 20,
         "maintainability": 15,
         "maintainability_rating": "A",
         "security": 10,
         "security_rating": "A",
-        "coverage": 7.87,
-        "coverage_percent": 47.2,
+        "coverage": 10,
+        "coverage_percent": 98.0,
         "technical_debt_minutes": 0.0,
         "technical_debt_ratio_percent": 0.0,
         "code_smells": 0.0,
         "supply_chain": 0,
-        "total": 32.87
+        "total": 55
       },
       "supply_chain": {
         "critical": -1,
