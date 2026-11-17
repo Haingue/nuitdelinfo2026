@@ -3,6 +3,7 @@
 // Remplace les placeholders (makePlaceholder) par tes sprites PNG dans src/assets/.
 
 import Phaser from 'phaser'
+import KartSprtie from '../../assets/sprite_cheets/mascot_cyberio_sprite_sheet.png'
 
 const GAME_WIDTH = 720
 const GAME_HEIGHT = 480
@@ -39,9 +40,9 @@ class KartScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.spritesheet('kart', '/sprite_cheets/mascot_cyberio_sprite_sheet.png', { frameWidth: 424, frameHeight: 281 });
-    this.load.spritesheet('obstacle', '/sprite_cheets/obstacle.png', { frameWidth: 498, frameHeight: 203 });
-    this.load.spritesheet('road', '/sprite_cheets/road.png', { frameWidth: 8820, frameHeight: 810 });
+    this.load.spritesheet('kart', new URL('/sprite_cheets/mascot_cyberio_sprite_sheet.png', import.meta.url).href, { frameWidth: 424, frameHeight: 281 });
+    this.load.spritesheet('obstacle', new URL('/sprite_cheets/obstacle.png', import.meta.url).href, { frameWidth: 498, frameHeight: 203 });
+    this.load.spritesheet('road', new URL('/sprite_cheets/road.png', import.meta.url).href, { frameWidth: 8820, frameHeight: 810 });
 
     // Placeholders (dessinés via CanvasTexture) pour tester sans assets :
     //this.makePlaceholder('kart', 0x3b82f6, KART_SIZE);
