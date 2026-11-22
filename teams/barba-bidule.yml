@@ -1,0 +1,26 @@
+# TPS Challenge — fichier d'équipe généré automatiquement
+# Équipe : Barba-bidule
+# Repo   : Barba-bidule/public_atelier_floral
+team-name: "Barba-bidule"
+repo: "Barba-bidule/public_atelier_floral"
+identity-hash: "d8c0b49c6741c65ffeb193f18ec287d221435972ef1079d1c0e758f2f54920b5"
+sonar-org: "Barba-bidule_public_atelier_floral"
+
+# === FICHIER D'APPEL — ne pas modifier ===
+name: "TPS Challenge — Appel de l'usine qualité"
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: read
+jobs:
+  tps-challenge:
+    uses: Haingue/nuitdelinfo2026/.github/workflows/quality.yml@v1
+    with:
+      team-name: "Barba-bidule"
+      identity-hash: "d8c0b49c6741c65ffeb193f18ec287d221435972ef1079d1c0e758f2f54920b5"
+      sonar-org: "Barba-bidule_public_atelier_floral"
+    secrets: inherit
+# === FIN DU FICHIER D'APPEL ===
