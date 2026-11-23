@@ -11,7 +11,7 @@
       "bonus_malus": 0.0
     },
     "eligible": true,
-    "timestamp": "2026-11-22T21:03:36.817543+00:00",
+    "timestamp": "2026-11-23T01:42:14.562548+00:00",
     "details": {
       "measures": {
         "coverage": "98.0",
@@ -57,5 +57,57 @@
       }
     },
     "rank": 1
+  },
+  {
+    "team": "Barba-bidule",
+    "repo": "Barba-bidule/public_atelier_floral",
+    "score": -0.06,
+    "breakdown": {
+      "qualite": 0,
+      "pente": 0.0,
+      "resilience": 0.0,
+      "heijunka": 9.94,
+      "bonus_malus": -10.0
+    },
+    "eligible": false,
+    "timestamp": "2026-11-23T01:42:08.217001+00:00",
+    "details": {
+      "measures": {},
+      "commits": 11,
+      "window_start": "2026-10-29T16:00:00+01:00",
+      "recoveries": 0,
+      "identity": {
+        "ok": true,
+        "expected_hash": "d8c0b49c6741c65ffeb193f18ec287d221435972ef1079d1c0e758f2f54920b5",
+        "repo_id": 1468005414,
+        "created_at": "2026-11-22T21:28:56Z"
+      },
+      "tests": {
+        "status": "failed",
+        "detected": 1,
+        "failed": 1,
+        "failed_tests": 1,
+        "frameworks": "Java (/__w/public_atelier_floral/public_atelier_floral/backend)"
+      },
+      "quality_breakdown": {
+        "gate": 0,
+        "maintainability": 0,
+        "maintainability_rating": null,
+        "security": 0,
+        "security_rating": null,
+        "coverage": 0,
+        "coverage_percent": null,
+        "technical_debt_minutes": null,
+        "technical_debt_ratio_percent": null,
+        "code_smells": null,
+        "supply_chain": 0,
+        "total": 0
+      },
+      "supply_chain": {
+        "critical": -1,
+        "high": -1
+      }
+    },
+    "rank": 2
   }
 ]
