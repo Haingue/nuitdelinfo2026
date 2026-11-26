@@ -529,6 +529,16 @@
       "resilience": 10,
       "heijunka": 8.8,
       "bonus_malus": 0.0
+    },
+    {
+      "ts": "2026-11-26T02:27:38.418152+00:00",
+      "scoring_version": 2,
+      "total": 74.62,
+      "qualite": 55,
+      "pente": 0.82,
+      "resilience": 10,
+      "heijunka": 8.8,
+      "bonus_malus": 0.0
     }
   ],
   "Barba-bidule": [
@@ -594,6 +604,16 @@
     },
     {
       "ts": "2026-11-25T19:37:05.327720+00:00",
+      "scoring_version": 2,
+      "total": -0.06,
+      "qualite": 0,
+      "pente": 0.0,
+      "resilience": 0.0,
+      "heijunka": 9.94,
+      "bonus_malus": -10.0
+    },
+    {
+      "ts": "2026-11-26T02:27:32.765355+00:00",
       "scoring_version": 2,
       "total": -0.06,
       "qualite": 0,
