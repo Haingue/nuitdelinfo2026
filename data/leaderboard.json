@@ -11,7 +11,7 @@
       "bonus_malus": 0.0
     },
     "eligible": true,
-    "timestamp": "2026-11-27T03:03:45.850400+00:00",
+    "timestamp": "2026-11-27T12:17:15.973190+00:00",
     "details": {
       "measures": {
         "coverage": "98.0",
@@ -70,7 +70,7 @@
       "bonus_malus": -10.0
     },
     "eligible": false,
-    "timestamp": "2026-11-27T03:03:39.821723+00:00",
+    "timestamp": "2026-11-27T12:17:09.543081+00:00",
     "details": {
       "measures": {},
       "commits": 11,
